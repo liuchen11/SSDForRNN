@@ -20,10 +20,13 @@ function sgd(model,states,ground_truth,num,learning_rate)
 	local V=model.h2o.weight
 
 	local present_states=states[num+1]
-	local last_dSdW={}		--ds(t)/dW each element should be a 3d tensor
-	local last_dSdU={}		--ds(t)/dU each element should be a 3d tensor
+	local dSdW=torch.zeros(hidden_size,hidden_size,hidden_size)		--dSdW[i,j,k]=dS(k)/dW(i,j)
+	local dSdU=torch.zeros(hidden_size,input_size,hidden_size)		--dSdU[i,j,k]=dS(k)/dU(i,j)
+	local batchWT=torch.Tensor(torch.LongStorage{hidden_size,hidden_size,hidden_size},torch.LongStorage{0,hidden_size,1})
+	batchWT[1]=W:t()
 
 	for iter=1,num do
+		local past_states=present_states
 		local input_part=model.i2h(states[iter])
 		local recurrent_part=model.h2h(present_states)
 		present_states=nn.Sigmoid()(nn.CAddTable(){input_part,recurrent_part})
@@ -34,51 +37,30 @@ function sgd(model,states,ground_truth,num,learning_rate)
 		local dV=(ground_truth[iter]-logsoft):reshape(output_size,1)*present_states:reshape(1,hidden_size)
 		model.h2o.gradWeight=model.h2o.gradWeight+dV
 		--update W's and U's gradient
-		local dSdW=torch.zeros(hidden_size,hidden_size,hidden_size)		--dSdW[i,j,k]=dS(k)/dW(i,j)
-		local dSdU=torch.zeros(hidden_size,input_size,hidden_size)		--dSdU[i,j,k]=dS(k)/dW(i,j)
 		local gS=gradient:dsigmoid(nn.CAddTable(){input_part,recurrent_part})
-		if iter==1 then
-			for i=1,hidden_size do
-				for j=1,hidden_size do
-					dSdW[i][j][i]=gS[i]*present_states[j]
-				end
-				for j=1,input_size do
-					dSdU[i][j][i]=gS[i]*states[iter][j]
-				end
-			end
-		else
-			for i=1,hidden_size do
-				for j=1,hidden_size do
-					for k=1,hidden_size do
-						if i==k then
-							dSdW[i][j][k]=gS[k]*(present_states[j]+last_dSdW[i][j]*W[k])
-						else
-							dSdW[i][j][k]=gS[k]*last_dSdW[i][j]*W[k]
-						end
-					end
-				end
-				for j=1,hidden_size do
-					for k=1,hidden_size do
-						if i==k then
-							dSdU[i][j][k]=gS[k]*(states[iter][j]+last_dSdU[i][j]*W[k])
-						else
-							dSdU[i][j][k]=gS[k]*last_dSdU[i][j]*W[k]
-						end
-					end
-				end
-			end
-		end
-		local dS=V:t()*(ground_truth-logsoft):reshape(output_size,1)
-		local dW=torch.zeros(hidden_size,hidden_size)
-		local dU=torch.zeros(hidden_size,input_size)
+
+		local batchgS=torch.Tensor(torch.LongStorage{hidden_size,hidden_size,hidden_size},torch.LongStorage{0,hidden_size,1})
+		batchgS[1]=torch.diag(gS)
+
+		dSdW=torch.bmm(dSdW,batchWT)
+		dSdU=torch.bmm(dSdU,batchWT)
 		for i=1,hidden_size do
 			for j=1,hidden_size do
-				dW[i][j]=dSdW[i][j]*dS
+				dSdW[i][j][i]=dSdW[i][j][i]+past_states[j]
 			end
 			for j=1,input_size do
-				dU[i][j]=dSdU[i][j]*dS
+				dSdU[i][j][i]=dSdU[i][j][i]+states[iter][j]
 			end
 		end
+		dSdW=torch.bmm(dSdW,batchgS)
+		dSdU=torch.bmm(dSdU,batchgS)
+
+		local dS=V:t()*(ground_truth-logsoft):reshape(output_size,1)	--dE/dS
+		local batchdS=torch.Tensor(torch.LongStorage{hidden_size,hidden_size,1},torch.LongStorage{0,1,1})
+		batchdS[0]=dS
+		local dW=torch.bmm(dSdW,batchdS):squeeze()		--dE/dW=dE/dS dS/dW
+		local dU=torch.bmm(dSdU,batchdS):squeeze()		--dE/dU=dE/dS dS/dU
+
 		model.h2h.gradWeight=model.h2h.gradWeight+dW
 		model.i2h.gradWeight=model.i2h.gradWeight+dU
 	end
