@@ -1,6 +1,7 @@
 RNN=require 'models.RNN'
 gradient=require 'util.gradient'
 
+--stochastic gradient descent
 function sgd(model,states,ground_truth,num,learning_rate)
 	--model: RNN model
 	--states: {input data..., initial hidden states}
@@ -57,7 +58,7 @@ function sgd(model,states,ground_truth,num,learning_rate)
 
 		local dS=V:t()*(ground_truth-logsoft):reshape(output_size,1)	--dE/dS
 		local batchdS=torch.Tensor(torch.LongStorage{hidden_size,hidden_size,1},torch.LongStorage{0,1,1})
-		batchdS[0]=dS
+		batchdS[1]=dS
 		local dW=torch.bmm(dSdW,batchdS):squeeze()		--dE/dW=dE/dS dS/dW
 		local dU=torch.bmm(dSdU,batchdS):squeeze()		--dE/dU=dE/dS dS/dU
 
