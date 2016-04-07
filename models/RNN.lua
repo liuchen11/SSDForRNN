@@ -1,11 +1,14 @@
+require 'nn'
+
 RNN={i2h=nil,h2h=nil,h2o=nil}
 
 function RNN:__init__(input_size,hidden_size,output_size)
 	--This is an implementaton of 1-layer RNN
 
-	self.i2h=nn.Linear(input_size,hidden_size)		--input to hidden layer
-	self.h2h=nn.Linear(hidden_size,hidden_size)		--recurrent connection
-	self.h2o=nn.Linear(hidden_size,output_size)		--hidden to output layer
+	--We disable bias of all layers
+	self.i2h=nn.Linear(input_size,hidden_size,false)		--input to hidden layer
+	self.h2h=nn.Linear(hidden_size,hidden_size,false)		--recurrent connection
+	self.h2o=nn.Linear(hidden_size,output_size,false)		--hidden to output layer
 end
 
 function RNN:run1Token(states)
@@ -44,7 +47,7 @@ function RNN:runTokens(states,ground_truth,num)
 		local proj=self.h2o(present_states)
 		local logsoft=nn.LogSoftMax()(proj)
 
-		err=err+ground_truth[iter]*torch.log(logsoft)
+		err=err+torch.dot(ground_truth[iter],logsoft)
 		table.insert(outputs,logsoft)
 	end
 
