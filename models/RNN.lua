@@ -11,13 +11,14 @@ function RNN:__init__(input_size,hidden_size,output_size)
 	self.h2o=nn.Linear(hidden_size,output_size,false)		--hidden to output layer
 end
 
-function RNN:run1Token(states)
+function RNN:run1Token(initial,states)
 	--1-layer RNN is 2-input 2-output neural network
 	--RNN runs for only one iteration
-	--states={input data,hidden states}
+	--initial states
+	--states={squence of inputs}
 
 	local input_data=states[1]
-	local past_state=states[2]
+	local past_state=initial
 
 	local input_part=self.i2h(input_data)
 	local recurrent_part=self.h2h(past_state)
@@ -29,13 +30,14 @@ function RNN:run1Token(states)
 	return {present_states,logsoft}
 end
 
-function RNN:runTokens(states,ground_truth,num)
+function RNN:runTokens(initial,states,ground_truth,num)
 	--RNN runs for several iterations
+	--initial: initial states
 	--num: the length of sequence
-	--states: {sequence...,hidden states}
+	--states: {sequence of inputs}
 	--ground_truth: {expected outputs}
 
-	local present_states=states[num+1]
+	local present_states=initial
 	local outputs={}
 	local err=0.0
 
