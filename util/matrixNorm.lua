@@ -10,7 +10,7 @@ function matrixNorm:norm(input,n,d)
 	--d: approximate dimension if d is non-positive, use precise SVD
 
 	local u,s,v
-	if d>0 then
+	if d>0 and d<input:size(1) and d<input:size(2) then
 		u,s,v=randSVD:svd(input,d)
 	else
 		u,s,v=torch.svd(input)

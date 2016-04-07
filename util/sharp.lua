@@ -12,7 +12,7 @@ function sharp:sharp(input)
 	if input:size(1)<100 or input:size(2)<100 then
 		u,s,v=torch.svd(input)
 	else
-		u,s,v=randSVD.svd(input,100)
+		u,s,v=randSVD:svd(input,100)
 	end
 
 	--x=usv^T => x#=|s|_{s^1}uv^T
