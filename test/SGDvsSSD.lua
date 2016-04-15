@@ -3,12 +3,12 @@ require 'math'
 require 'sgd.sgd'
 require 'ssd.ssd'
 
-rnn1={i2h=nil,h2h=nil,h2o=nil,__init__=RNN.__init__,run1Token=RNN.run1Token,runTokens=RNN.runTokens}
-rnn2={i2h=nil,h2h=nil,h2o=nil,__init__=RNN.__init__,run1Token=RNN.run1Token,runTokens=RNN.runTokens}
-N=20
-H=10
-K=20
-S=100
+rnn1={i2h=nil,h2h=nil,h2o=nil,buffer=0,__init__=RNN.__init__,run1Token=RNN.run1Token,runTokens=RNN.runTokens,update=RNN.update}
+rnn2={i2h=nil,h2h=nil,h2o=nil,buffer=0,__init__=RNN.__init__,run1Token=RNN.run1Token,runTokens=RNN.runTokens,update=RNN.update}
+N=100
+H=100
+K=10
+S=10
 iters=10
 
 rnn1:__init__(N,H,K)
@@ -31,7 +31,8 @@ end
 time=0
 for i=1,iters do
 	local begin=os.clock()
-	local err=sgd(rnn1,initial,states,ground_truth,S,1)
+	local err=sgd(rnn1,initial,states,ground_truth,S)
+	rnn1:update(0.01)
 	local finish=os.clock()
 	time=time+finish-begin
 	print(i,err)
@@ -41,7 +42,8 @@ print('time',time)
 time=0
 for i=1,iters do
 	local begin=os.clock()
-	local err=ssd(rnn2,initial,states,ground_truth,S,1)
+	local err=ssd(rnn2,initial,states,ground_truth,S)
+	rnn2:update(1)
 	local finish=os.clock()
 	time=time+finish-begin
 	print(i,err)

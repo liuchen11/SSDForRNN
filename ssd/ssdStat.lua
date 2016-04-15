@@ -6,12 +6,13 @@ require 'util.vectorNorm'
 require 'util.sharp'
 
 --stochastic spectral descent
-function ssd(model,initial,states,ground_truth,num)
+function ssdStat(model,initial,states,ground_truth,num)
 	--model: RNN model
 	--initial: 
 	--states: {input data..., initial hidden states}
 	--ground_truth: {expected outputs}
 	--num: length of the sequence
+	--learning_rate: learning rate
 
 	local input_size=model.i2h.weight:size(2)
 	local hidden_size=model.h2h.weight:size(2)
@@ -31,7 +32,14 @@ function ssd(model,initial,states,ground_truth,num)
 	local batchWT=torch.Tensor(torch.LongStorage{hidden_size,hidden_size,hidden_size},torch.LongStorage{0,hidden_size,1})
 	batchWT[1]=W:t()
 
+	local T_updateV=0
+	local T_updateW=0
+	local T_updateU=0
+	local T_UV=0
+	local T_basic=0
 	for iter=1,num do
+		local begin=0
+		local finish=0
 		--save the status of previous time
 		local past_states=present_states
 		local past_dSdW=dSdW
@@ -46,14 +54,17 @@ function ssd(model,initial,states,ground_truth,num)
 
 		--update V's gradient
 		--calculate dE/dV
+		begin=os.clock()
 		local dV=(ground_truth[iter]-logsoft):reshape(output_size,1)*present_states:reshape(1,hidden_size)
 		local dV_sharp=sharp:sharp(dV)
 		--calculate L_dV
 		local L_dV=math.pow(vectorNorm:norm(present_states,2),2)/2
 		tmpGradV=tmpGradV+dV_sharp/L_dV
-
+		finish=os.clock()
+		T_updateV=T_updateV+finish-begin
 		--update W's and U's gradient
 		--calculate dE/dW dE/dU
+		begin=os.clock()
 		local gS=gradient:dsigmoid(input_part+recurrent_part)
 
 		local batchgS=torch.Tensor(torch.LongStorage{hidden_size,hidden_size,hidden_size},torch.LongStorage{0,hidden_size,1})
@@ -79,7 +90,10 @@ function ssd(model,initial,states,ground_truth,num)
 		local dU=torch.bmm(dSdU,batchdS):squeeze()
 		local dW_sharp=sharp:sharp(dW)
 		local dU_sharp=sharp:sharp(dU)
+		finish=os.clock()
+		T_UV=T_UV+finish-begin
 		--calculate basic parameters
+		begin=os.clock()
 		local past_states_2n=vectorNorm:norm(past_states,2) --|s_{t-1}|_2
 		local input_2n=vectorNorm:norm(states[iter],2)		--|x_t|_2
 		local W_sinf=matrixNorm:norm(W,1/0,100)					--|W|_S^\inf
@@ -95,7 +109,10 @@ function ssd(model,initial,states,ground_truth,num)
 		local max_Vp_infn=vectorNorm:norm(V[p],1/0)			--|V_{p,:}|_\inf
 		local Vp=V[p]:reshape(hidden_size,1)
 		local batchVp=torch.Tensor(torch.LongStorage{hidden_size,hidden_size,1},torch.LongStorage{0,1,1})
+		finish=os.clock()
+		T_basic=T_basic+finish-begin
 		--calculate L_dW
+		begin=os.clock()
 		local PW=torch.bmm(past_dSdW,batchWT)				--|ds/dW * W^T|
 		local PWV=torch.bmm(PW,batchVp)						--|ds/dW * W^T * V[p]|
 		local PWV_s1=matrixNorm:norm(PWV:squeeze(),1,-1)
@@ -119,7 +136,10 @@ function ssd(model,initial,states,ground_truth,num)
 		local L_dW_p5=gradient.max_dsigmoid*max_Vp_2n*past_dSdW_bar_s1
 		local L_dW=L_dW_p1+L_dW_p2+L_dW_p3+L_dW_p4+L_dW_p5
 		tmpGradW=tmpGradW+dW_sharp/L_dW
+		finish=os.clock()
+		T_updateW=T_updateW+finish-begin
 
+		begin=os.clock()
 		local QW=torch.bmm(past_dSdU,batchWT)
 		local QWV=torch.bmm(QW,batchVp)
 		local QWV_s1=matrixNorm:norm(QWV:squeeze(),1,-1)
@@ -141,6 +161,8 @@ function ssd(model,initial,states,ground_truth,num)
 		local L_dU_p3=gradient.max_ddsigmoid*max_Vp_infn*W_sinf*past_dSdU_bar_s1*(input_2n+QW_s1_vec_2n)
 		local L_dU=L_dU_p1+L_dU_p2+L_dU_p3
 		tmpGradU=tmpGradU+dU_sharp/L_dU
+		finish=os.clock()
+		T_updateU=T_updateU+finish-begin
 	end
 
 	err=err/num
@@ -148,6 +170,6 @@ function ssd(model,initial,states,ground_truth,num)
 	model.i2h.gradWeight=model.i2h.gradWeight+tmpGradU/num
 	model.h2h.gradWeight=model.h2h.gradWeight+tmpGradW/num
 	model.h2o.gradWeight=model.h2o.gradWeight+tmpGradV/num
-	
-	return err
+
+	return {T_basic=T_basic,T_UV=T_UV,T_updateU=T_updateU,T_updateW=T_updateW,T_updateV=T_updateV}
 end

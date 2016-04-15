@@ -1,6 +1,6 @@
 require 'nn'
 
-RNN={i2h=nil,h2h=nil,h2o=nil}
+RNN={i2h=nil,h2h=nil,h2o=nil,buffer=0}
 
 function RNN:__init__(input_size,hidden_size,output_size)
 	--This is an implementaton of 1-layer RNN
@@ -9,6 +9,10 @@ function RNN:__init__(input_size,hidden_size,output_size)
 	self.i2h=nn.Linear(input_size,hidden_size,false)		--input to hidden layer
 	self.h2h=nn.Linear(hidden_size,hidden_size,false)		--recurrent connection
 	self.h2o=nn.Linear(hidden_size,output_size,false)		--hidden to output layer
+	self.i2h.gradWeight:fill(0)
+	self.h2h.gradWeight:fill(0)
+	self.h2o.gradWeight:fill(0)
+	buffer=0
 end
 
 function RNN:run1Token(initial,states)
@@ -57,4 +61,17 @@ function RNN:runTokens(initial,states,ground_truth,num)
 	table.insert(outputs,present_states)
 	err=err/num
 	return {error=err,states=outputs}
+end
+
+function RNN:update(learning_rate)
+	--update parameters
+	--learning_rate: learning rate
+	self.i2h:updateParameters(learning_rate/self.buffer)
+	self.h2h:updateParameters(learning_rate/self.buffer)
+	self.h2o:updateParameters(learning_rate/self.buffer)
+
+	self.buffer=0
+	self.i2h.gradWeight:fill(0)
+	self.h2h.gradWeight:fill(0)
+	self.h2o.gradWeight:fill(0)
 end
