@@ -19,8 +19,11 @@ param.testYFile='./atis/test_label.csv'
 param.dictFile='./atis/dict.csv'
 param.vectorDim=300
 param.window=3
-param.hiddens=500
+param.hiddens=300
 param.outputs=128
+param.batch=25
+param.epoch=10
+param.sgdLearningRate=0.01
 param.inputs=param.window*param.vectorDim
 param.leftPad=math.floor(param.window/2)
 
@@ -32,8 +35,8 @@ dict=loader:loadDict(param.dictFile)
 dict[-1]=torch.rand(param.vectorDim)*0.05		--padding vector
 
 --create 2 RNNs that have the same parameters and share the intital states
-rnn1={i2h=nil,h2h=nil,h2o=nil,__init__=RNN.__init__,run1Token=RNN.run1Token,runTokens=RNN.runTokens}
-rnn2={i2h=nil,h2h=nil,h2o=nil,__init__=RNN.__init__,run1Token=RNN.run1Token,runTokens=RNN.runTokens}
+rnn1={i2h=nil,h2h=nil,h2o=nil,buffer=0,__init__=RNN.__init__,run1Token=RNN.run1Token,runTokens=RNN.runTokens,update=RNN.update}
+rnn2={i2h=nil,h2h=nil,h2o=nil,buffer=0,__init__=RNN.__init__,run1Token=RNN.run1Token,runTokens=RNN.runTokens,update=RNN.update}
 rnn1:__init__(param.inputs,param.hiddens,param.outputs)
 rnn2:__init__(param.inputs,param.hiddens,param.outputs)
 rnn2.i2h.weight:copy(rnn2.i2h.weight)
@@ -48,8 +51,6 @@ trainX={}
 trainY={}
 testX={}
 testY={}
--- trainInput=torch.zeros(trainNum,param.inputs)
--- testInput=torch.zeros(testNum,param.inputs)
 for i=1,trainNum do
 	if i%100==0 then
 		print(i,'/',trainNum)
@@ -110,5 +111,21 @@ for i=1,testNum do
 	table.insert(testY,singleLabel)
 end
 
+--SGD--
+for iter=1,param.epoch do
+	local err_total=0
+	for i=1,trainNum do
+		local len=table.getn(trainIndex[i])
+		local err=sgd(rnn1,initial,trainX[i],trainY[i],len)
+		err_total=err_total+err
+		if i%param.batch==0 then
+			rnn1:update(param.sgdLearningRate)
+		end
+		print('epoch=%d,index=%d'%{iter,i})
+	end
+	rnn1:update(param.sgdLearningRate)
+	print('epoch %d completed'%iter)
+	print('total error=%f'%err_total)
+end
 
 
