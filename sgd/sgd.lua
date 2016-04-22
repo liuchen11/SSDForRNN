@@ -34,10 +34,10 @@ function sgd(model,initial,states,ground_truth,num)
 		present_states=nn.Sigmoid()(nn.CAddTable(){input_part,recurrent_part})
 		local proj=model.h2o(present_states)
 		local logsoft=nn.LogSoftMax()(proj)
-		err=err+torch.dot(ground_truth[iter],logsoft)
+		err=err-torch.dot(ground_truth[iter],logsoft)
 
 		--update V's gradient
-		local dV=(ground_truth[iter]-logsoft):reshape(output_size,1)*present_states:reshape(1,hidden_size)
+		local dV=(-ground_truth[iter]+logsoft):reshape(output_size,1)*present_states:reshape(1,hidden_size)
 		tmpGradV=tmpGradV+dV
 		--update W's and U's gradient
 		local gS=gradient:dsigmoid(nn.CAddTable(){input_part,recurrent_part})
@@ -58,7 +58,7 @@ function sgd(model,initial,states,ground_truth,num)
 		dSdW=torch.bmm(dSdW,batchgS)
 		dSdU=torch.bmm(dSdU,batchgS)
 
-		local dS=(V:t()*(ground_truth[iter]-logsoft)):reshape(hidden_size,1)	--dE/dS
+		local dS=(V:t()*(-ground_truth[iter]+logsoft)):reshape(hidden_size,1)	--dE/dS
 		local batchdS=torch.Tensor(torch.LongStorage{hidden_size,hidden_size,1},torch.LongStorage{0,1,1})
 		batchdS[1]=dS
 		local dW=torch.bmm(dSdW,batchdS):squeeze()		--dE/dW=dE/dS dS/dW
