@@ -28,12 +28,14 @@ function sgd(model,initial,states,ground_truth,num)
 	batchWT[1]=W:t()
 
 	for iter=1,num do
-		local past_states=present_states
+		local past_states=torch.Tensor(present_states:size()):copy(present_states)
+
 		local input_part=model.i2h(states[iter])
 		local recurrent_part=model.h2h(present_states)
 		present_states=nn.Sigmoid()(nn.CAddTable(){input_part,recurrent_part})
 		local proj=model.h2o(present_states)
 		local logsoft=nn.LogSoftMax()(proj)
+		-- print(torch.dot(ground_truth[iter],logsoft))
 		err=err-torch.dot(ground_truth[iter],logsoft)
 
 		--update V's gradient

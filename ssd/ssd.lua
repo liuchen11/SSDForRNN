@@ -28,14 +28,29 @@ function ssd(model,initial,states,ground_truth,num)
 	local present_states=initial
 	local dSdW=torch.zeros(hidden_size,hidden_size,hidden_size)		--dSdW[i,j,k]=dS(k)/dW(i,j)
 	local dSdU=torch.zeros(hidden_size,input_size,hidden_size)		--dSdU[i,j,k]=dS(k)/dU(i,j)
+	--calculate some basic parameters
 	local batchWT=torch.Tensor(torch.LongStorage{hidden_size,hidden_size,hidden_size},torch.LongStorage{0,hidden_size,1})
-	batchWT[1]=W:t()
+	batchWT[1]=W:t()									--batch version of W^T
+	local W_sinf=matrixNorm:norm(W,1/0,100)				--|W|_S^\inf
+	local p=-1 											--find max_p |V_{p,:}|
+	local max_Vp_2n=0									--!approximate the maximum of the output vector by choosen the row of V with largest 2-norm
+	for i=1,output_size do
+		local Vp_2n=vectorNorm:norm(V[i],2)
+		if Vp_2n>max_Vp_2n then
+			p=i
+			max_Vp_2n=Vp_2n
+		end
+	end
+	local max_Vp_infn=vectorNorm:norm(V[p],1/0)			--|V_{p,:}|_\inf
+	local Vp=V[p]:reshape(hidden_size,1)
+	local batchVp=torch.Tensor(torch.LongStorage{hidden_size,hidden_size,1},torch.LongStorage{0,1,1})
+	batchVp[1]=Vp
 
 	for iter=1,num do
 		--save the status of previous time
-		local past_states=present_states
-		local past_dSdW=dSdW
-		local past_dSdU=dSdU
+		local past_states=torch.Tensor(present_states:size()):copy(present_states)
+		local past_dSdW=torch.Tensor(dSdW:size()):copy(dSdW)
+		local past_dSdU=torch.Tensor(dSdU:size()):copy(dSdU)
 
 		local input_part=model.i2h(states[iter])
 		local recurrent_part=model.h2h(present_states)
@@ -82,19 +97,6 @@ function ssd(model,initial,states,ground_truth,num)
 		--calculate basic parameters
 		local past_states_2n=vectorNorm:norm(past_states,2) --|s_{t-1}|_2
 		local input_2n=vectorNorm:norm(states[iter],2)		--|x_t|_2
-		local W_sinf=matrixNorm:norm(W,1/0,100)					--|W|_S^\inf
-		local p=-1 											--find max_p |V_{p,:}|
-		local max_Vp_2n=0									--!approximate the maximum of the output vector by choosen the row of V with largest 2-norm
-		for i=1,output_size do
-			local Vp_2n=vectorNorm:norm(V[i],2)
-			if Vp_2n>max_Vp_2n then
-				p=i
-				max_Vp_2n=Vp_2n
-			end
-		end
-		local max_Vp_infn=vectorNorm:norm(V[p],1/0)			--|V_{p,:}|_\inf
-		local Vp=V[p]:reshape(hidden_size,1)
-		local batchVp=torch.Tensor(torch.LongStorage{hidden_size,hidden_size,1},torch.LongStorage{0,1,1})
 		--calculate L_dW
 		local PW=torch.bmm(past_dSdW,batchWT)				--|ds/dW * W^T|
 		local PWV=torch.bmm(PW,batchVp)						--|ds/dW * W^T * V[p]|
