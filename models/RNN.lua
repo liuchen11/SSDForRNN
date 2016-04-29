@@ -1,6 +1,6 @@
 require 'nn'
 
-RNN={i2h=nil,h2h=nil,h2o=nil,buffer=0}
+RNN={i2h=nil,h2h=nil,h2o=nil,s=nil,ds=nil,buffer=0}
 
 function RNN:__init__(input_size,hidden_size,output_size)
 	--This is an implementaton of 1-layer RNN
@@ -9,20 +9,20 @@ function RNN:__init__(input_size,hidden_size,output_size)
 	self.i2h=nn.Linear(input_size,hidden_size,false)		--input to hidden layer
 	self.h2h=nn.Linear(hidden_size,hidden_size,false)		--recurrent connection
 	self.h2o=nn.Linear(hidden_size,output_size,false)		--hidden to output layer
-	self.i2h.gradWeight:fill(0)
+	self.s=torch.randn(hidden_size)							--initial hidden value is initialized randomly
+	self.i2h.gradWeight:fill(0)								--all derivatives are set zeros
 	self.h2h.gradWeight:fill(0)
 	self.h2o.gradWeight:fill(0)
+	self.ds=torch.zeros(hidden_size)
 	buffer=0
 end
 
-function RNN:run1Token(initial,states)
-	--1-layer RNN is 2-input 2-output neural network
+function RNN:run1Token(state)
 	--RNN runs for only one iteration
-	--initial states
-	--states={squence of inputs}
+	--states=one input
 
-	local input_data=states[1]
-	local past_state=initial
+	local input_data=state
+	local past_state=self.s
 
 	local input_part=self.i2h(input_data)
 	local recurrent_part=self.h2h(past_state)
@@ -34,15 +34,16 @@ function RNN:run1Token(initial,states)
 	return {present_states,logsoft}
 end
 
-function RNN:runTokens(initial,states,ground_truth,num)
+function RNN:runTokens(states,ground_truth)
 	--RNN runs for several iterations
 	--initial: initial states
 	--num: the length of sequence
 	--states: {sequence of inputs}
 	--ground_truth: {expected outputs}
 
-	local present_states=initial
+	local present_states=self.s
 	local outputs={}
+	local num=states:size(1)
 	local err=0.0
 
 	for iter=1,num do
@@ -57,21 +58,31 @@ function RNN:runTokens(initial,states,ground_truth,num)
 		table.insert(outputs,logsoft)
 	end
 
-	--outputs={outputs,hidden_states}
-	table.insert(outputs,present_states)
 	err=err/num
-	return {error=err,states=outputs}
+	return {error=err,prediction=outputs}
 end
 
-function RNN:update(learning_rate)
-	--update parameters
+function RNN:updateUWV(learning_rate)
+	--update parameters U W V
 	--learning_rate: learning rate
-	self.i2h:updateParameters(learning_rate/self.buffer)
-	self.h2h:updateParameters(learning_rate/self.buffer)
-	self.h2o:updateParameters(learning_rate/self.buffer)
+	if self.buffer>0 then
+		self.i2h:updateParameters(learning_rate/self.buffer)
+		self.h2h:updateParameters(learning_rate/self.buffer)
+		self.h2o:updateParameters(learning_rate/self.buffer)
 
-	self.buffer=0
-	self.i2h.gradWeight:fill(0)
-	self.h2h.gradWeight:fill(0)
-	self.h2o.gradWeight:fill(0)
+		self.buffer=0
+		self.i2h.gradWeight:fill(0)
+		self.h2h.gradWeight:fill(0)
+		self.h2o.gradWeight:fill(0)
+	end
+end
+
+function RNN:updateS(learning_rate)
+	--update parameters s0
+	--learning_rate: learning rate
+	if self.buffer>0 then
+		self.s=self.s-learning_rate*self.ds
+		self.buffer=0
+		self.ds:fill(0)
+	end
 end
