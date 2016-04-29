@@ -15,11 +15,24 @@ function dsigmoidElement(value)
 	return sig*(1-sig)
 end
 
+function ddsigmoidElement(value)
+	--second order derivative of sigmoid function for a given scalar
+	local sig=sigmoidElement(value)
+	return 2*math.pow(sig,3)-3*math.pow(sig,2)+sig
+end
+
 function gradient:dsigmoid(value)
 	--gradient of sigmoid function
 	--value is a matrix
 	local gvalue=torch.Tensor(value:size()):copy(value)	--deep copy
 	return gvalue:apply(dsigmoidElement)
+end
+
+function gradient:ddsigmoid(value)
+	--second order gradient of sigmoid function
+	--value is a matrix
+	local gvalue=torch.Tensor(value:size()):copy(value)
+	return gvalue:apply(ddsigmoidElement)
 end
 
 function relu(value)
