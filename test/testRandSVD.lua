@@ -7,7 +7,7 @@ u1,s1,v1=torch.svd(randM)
 finish=os.clock()
 print('take',finish-begin,'seconds')
 begin=os.clock()
-u2,s2,v2=randSVD:svd(randM,800)
+u2,s2,v2=randSVD:svd(randM,200)
 finish=os.clock()
 print('take',finish-begin,'seconds')
 --Schatten infinity tends to be much more accurate

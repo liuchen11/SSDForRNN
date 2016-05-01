@@ -7,23 +7,30 @@ require 'util.randSVD'
 require 'util.sharp'
 require 'util.vectorNorm'
 require 'models.RNN'
-require 'sgd.sgd'
-require 'ssd.ssd'
+require 'optimization.sgd'
+require 'optimization.ssd'
 
 --hyper-parameters
 param={}
-param.trainXFile='./atis/train_word.csv'
-param.trainYFile='./atis/train_label.csv'
-param.testXFile='./atis/test_word.csv'
-param.testYFile='./atis/test_label.csv'
-param.dictFile='./atis/dict.csv'
-param.vectorDim=300
+param.trainXFile='./atis/train_word200.csv'
+param.trainYFile='./atis/train_label200.csv'
+param.testXFile='./atis/test_word50.csv'
+param.testYFile='./atis/test_label50.csv'
+param.dictFile='./atis/dict10.csv'
+param.vectorDim=10
 param.window=3
-param.hiddens=300
+param.hiddens=60
 param.outputs=128
-param.batch=25
-param.epoch=10
-param.sgdLearningRate=0.01
+param.batch=10
+param.epoch=5
+param.sgdLearningRateUWV=10
+param.sgdUWVDecay=1
+param.sgdLearningRateS=1
+param.sgdSDecay=1
+param.ssdLearningRateUWV=5
+param.ssdUWVDecay=1
+param.ssdLearningRateS=0.05
+param.ssdSDecay=1
 param.inputs=param.window*param.vectorDim
 param.leftPad=math.floor(param.window/2)
 
@@ -35,14 +42,18 @@ dict=loader:loadDict(param.dictFile)
 dict[-1]=torch.rand(param.vectorDim)*0.05		--padding vector
 
 --create 2 RNNs that have the same parameters and share the intital states
-rnn1={i2h=nil,h2h=nil,h2o=nil,buffer=0,__init__=RNN.__init__,run1Token=RNN.run1Token,runTokens=RNN.runTokens,update=RNN.update}
-rnn2={i2h=nil,h2h=nil,h2o=nil,buffer=0,__init__=RNN.__init__,run1Token=RNN.run1Token,runTokens=RNN.runTokens,update=RNN.update}
+rnn1={i2h=nil,h2h=nil,h2o=nil,s=nil,ds=nil,buffer=0,
+__init__=RNN.__init__,run1Token=RNN.run1Token,runTokens=RNN.runTokens,
+updateUWV=RNN.updateUWV,updateS=RNN.updateS}
+rnn2={i2h=nil,h2h=nil,h2o=nil,s=nil,ds=nil,buffer=0,
+__init__=RNN.__init__,run1Token=RNN.run1Token,runTokens=RNN.runTokens,
+updateUWV=RNN.updateUWV,updateS=RNN.updateS}
 rnn1:__init__(param.inputs,param.hiddens,param.outputs)
 rnn2:__init__(param.inputs,param.hiddens,param.outputs)
-rnn2.i2h.weight:copy(rnn2.i2h.weight)
-rnn2.h2h.weight:copy(rnn2.h2h.weight)
-rnn2.h2o.weight:copy(rnn2.h2o.weight)
-initial=torch.rand(param.hiddens)*0.05
+rnn2.s:copy(rnn1.s)
+rnn2.i2h.weight:copy(rnn1.i2h.weight)
+rnn2.h2h.weight:copy(rnn1.h2h.weight)
+rnn2.h2o.weight:copy(rnn1.h2o.weight)
 
 --create the input and expected output of RNN
 trainNum=table.getn(trainIndex)
@@ -112,20 +123,53 @@ for i=1,testNum do
 end
 
 --SGD--
+local sgd_lr_uwv=param.sgdLearningRateUWV
+local sgd_lr_s=param.sgdLearningRateS
 for iter=1,param.epoch do
 	local err_total=0
 	for i=1,trainNum do
 		local len=table.getn(trainIndex[i])
-		local err=sgd(rnn1,initial,trainX[i],trainY[i],len)
-		err_total=err_total+err
-		if i%param.batch==0 then
-			rnn1:update(param.sgdLearningRate)
+		if len>0 then
+			local err=sgd(rnn1,trainX[i],trainY[i])
+			err_total=err_total+err
 		end
-		print('epoch=%d,index=%d'%{iter,i})
+		if i%param.batch==0 then
+			rnn1:updateUWV(sgd_lr_uwv)
+			rnn1:updateS(sgd_lr_s)
+			print('epoch=%d,index=%d/%d'%{iter,i,trainNum})
+			print('accumulated error=%f'%err_total)
+		end
 	end
-	rnn1:update(param.sgdLearningRate)
-	print('epoch %d completed'%iter)
+	rnn1:updateUWV(sgd_lr_uwv)
+	rnn1:updateS(sgd_lr_s)
+	print('epoch %d completed'%{iter})
 	print('total error=%f'%err_total)
+	sgd_lr_uwv=sgd_lr_uwv*param.sgdUWVDecay
+	sgd_lr_s=sgd_lr_s*param.sgdSDecay
 end
 
-
+--SSD--
+local ssd_lr_uwv=param.ssdLearningRateUWV
+local ssd_lr_s=param.ssdLearningRateS
+for iter=1,param.epoch do
+	local err_total=0
+	for i=1,trainNum do
+		local len=table.getn(trainIndex[i])
+		if len>0 then
+			local err=ssd(rnn2,trainX[i],trainY[i])
+			err_total=err_total+err
+		end
+		if i%param.batch==0 then
+			rnn2:updateUWV(ssd_lr_uwv)
+			rnn2:updateUWV(ssd_lr_s)
+			print('epoch=%d,index=%d/%d'%{iter,i,trainNum})
+			print('accumulated error=%f'%err_total)
+		end
+	end
+	rnn2:updateUWV(ssd_lr_uwv)
+	rnn2:updateS(ssd_lr_s)
+	print('epoch %d completed'%iter)
+	print('total error=%f'%err_total)
+	ssd_lr_uwv=ssd_lr_uwv*param.ssdUWVDecay
+	ssd_lr_s=ssd_lr_s*param.ssdSDecay
+end

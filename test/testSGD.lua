@@ -1,12 +1,14 @@
 require 'models.RNN'
-require 'sgd.sgd'
+require 'optimization.sgd'
 
-rnn={i2h=nil,h2h=nil,h2o=nil,buffer=0,__init__=RNN.__init__,run1Token=RNN.run1Token,runTokens=RNN.runTokens,update=RNN.update}
-N=20
-H=20
-K=20
-S=10
-iters=30
+rnn={i2h=nil,h2h=nil,h2o=nil,s=nil,ds=nil,buffer=0,
+__init__=RNN.__init__,run1Token=RNN.run1Token,runTokens=RNN.runTokens,
+updateUWV=RNN.updateUWV,updateS=RNN.updateS}
+N=5
+H=5
+K=5
+S=50
+iters=1000
 
 rnn:__init__(N,H,K)
 -- print('input',rnn.i2h.weight)
@@ -24,8 +26,11 @@ end
 time=0
 for i=1,iters do
 	local begin=os.clock()
-	local err=sgd(rnn,initial,states,ground_truth,S)
-	rnn:update(0.1)
+	local err=sgd(rnn,states,ground_truth)
+	if i%2==0 then
+		rnn:updateUWV(0.1)
+		rnn:updateS(0.1)
+	end
 	local finish=os.clock()
 	time=time+finish-begin
 	print(i,err)

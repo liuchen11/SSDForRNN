@@ -13,7 +13,7 @@ function randSVD:svd(input,d)
 	end
 
 	local omega=torch.randn(X:size(2),d)
-	local Q,R=torch.qr(X*omega)
+	local Q,R=torch.qr(X*omega)		--heigh/width can be not too small or too large
 	local B=Q:t()*X
 	local u,s,v=torch.svd(B)
 	u=Q*u
