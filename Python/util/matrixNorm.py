@@ -5,4 +5,4 @@ import numpy as np
 
 def norm(input,n):
 	U,s,V=np.linalg.svd(input)
-	return vectorNorm(s,n)
+	return vectorNorm.norm(s,n)
