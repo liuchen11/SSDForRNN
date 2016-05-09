@@ -48,12 +48,12 @@ class RNN(object):
 		err=err/num
 		return err,outputs
 
-	def update(self,learning_rate1,learning_rate2):
+	def update(self,learning_rates):
 		if self.buffer>0:
-			self.U=self.U-self.gU*learning_rate1/self.buffer
-			self.W=self.W-self.gW*learning_rate1/self.buffer
-			self.V=self.V-self.gV*learning_rate1/self.buffer
-			self.s=self.s-self.gs*learning_rate2/self.buffer
+			self.U=self.U-self.gU*learning_rates['U']/self.buffer
+			self.W=self.W-self.gW*learning_rates['W']/self.buffer
+			self.V=self.V-self.gV*learning_rates['V']/self.buffer
+			self.s=self.s-self.gs*learning_rates['s']/self.buffer
 
 			self.buffer=0
 			self.gU=np.zeros(self.gU.shape)

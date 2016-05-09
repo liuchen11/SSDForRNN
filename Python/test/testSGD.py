@@ -1,7 +1,7 @@
 import sys
 sys.path.insert(0,'./util/')
 sys.path.insert(0,'./models/')
-sys.path.insert(0,'./optimization/')
+sys.path.insert(0,'./methods/')
 
 import RNN
 import sgd
@@ -29,7 +29,7 @@ for i in xrange(iters):
 	begin=time.time()
 	err=sgd.sgd(rnn,states,ground_truth)
 	end=time.time()
-	rnn.update(0.5,0.5)
+	rnn.update({'W':0.5,'U':0.5,'V':0.5,'s':0.5})
 	duration+=end-begin
 	print i,'\t',err
 print 'time: ', duration
