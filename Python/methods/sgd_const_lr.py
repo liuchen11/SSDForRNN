@@ -29,17 +29,18 @@ def sgd(model,states,ground_truth):
 		input_part=np.dot(model.U,states[index])
 		recur_part=np.dot(model.W,hidden_states)
 		new_states=gradient.sigmoid(input_part+recur_part)
-		proj=np.dot(model.V,hidden_states)
+		proj=np.dot(model.V,new_states)
 		soft=softmax.softmax(proj)
 		logsoft=np.log(soft)
 		err-=np.dot(ground_truth[index],logsoft)
 
 		dis=soft-ground_truth[index]
+		lamb=gradient.dsigmoid(input_part+recur_part)
+		Lamb=np.diag(lamb)
+
 		dEdV=np.dot(dis.reshape(output_size,1),new_states.reshape(1,hidden_size))
 		tmpGradV+=dEdV
 
-		lamb=gradient.dsigmoid(input_part+recur_part)
-		Lamb=np.diag(lamb)
 		dSdW=batchProduct.nXone(dSdW,model.W.transpose())
 		dSdU=batchProduct.nXone(dSdU,model.W.transpose())
 		for i in xrange(hidden_size):
