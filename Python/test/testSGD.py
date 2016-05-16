@@ -4,7 +4,7 @@ sys.path.insert(0,'./models/')
 sys.path.insert(0,'./methods/')
 
 import RNN
-import sgd
+import sgd_const_lr
 import random
 import time
 import numpy as np

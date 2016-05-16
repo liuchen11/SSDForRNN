@@ -8,10 +8,9 @@ import numpy as np
 class RNN(object):
 
 	def __init__(self,input_size,hidden_size,output_size):
-		# self.U=np.random.random([hidden_size,input_size])*2-1
-		# self.W=np.random.random([hidden_size,hidden_size])*2-1
-		# self.V=np.random.random([output_size,hidden_size])*2-1
-		# self.s=np.random.random([hidden_size])*2-1
+		self.input_size=input_size
+		self.hidden_size=hidden_size
+		self.output_size=output_size
 		self.U=np.random.randn(hidden_size,input_size)*0.5
 		self.W=np.random.randn(hidden_size,hidden_size)*0.5
 		self.V=np.random.randn(output_size,hidden_size)*0.5
@@ -23,15 +22,25 @@ class RNN(object):
 		self.buffer=0
 
 	def size(self):
-		input_size=self.U.shape[1]
-		hidden_size=self.W.shape[1]
-		output_size=self.V.shape[0]
-		return input_size,hidden_size,output_size
+		return self.input_size,self.hidden_size,self.output_size
+
+	def copy(self):
+		ret=RNN(self.input_size,self.hidden_size,self.output_size)
+		ret.U=np.copy(self.U)
+		ret.W=np.copy(self.W)
+		ret.V=np.copy(self.V)
+		ret.s=np.copy(self.s)
+		ret.gU=np.copy(self.gU)
+		ret.gW=np.copy(self.gW)
+		ret.gV=np.copy(self.gV)
+		ret.gs=np.copy(self.gs)
+		ret.buffer=self.buffer
+		return ret
 
 	def runTokens(self,states,ground_truth):
-		num=len(states)
 		err=0.0
 		outputs=[]
+		num=len(states)
 		hidden_states=self.s
 
 		for i in xrange(num):
@@ -42,7 +51,7 @@ class RNN(object):
 			soft=softmax.softmax(proj)
 			logsoft=np.log(soft)
 
-			err=err+np.dot(ground_truth[i],logsoft)
+			err=err-np.dot(ground_truth[i],logsoft)
 			outputs.append(soft)
 
 		err=err/num
