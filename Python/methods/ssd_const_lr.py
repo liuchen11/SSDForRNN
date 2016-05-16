@@ -40,8 +40,8 @@ def ssd(model,states,ground_truth):
 		Lamb=np.diag(lamb)
 
 		dEdV=np.dot(dis.reshape(output_size,1),new_states.reshape(1,hidden_size))
-		dEdV_sharp=sharp.sharp(dEdV)
-		tmpGradV+=dEdV_sharp
+		#dEdV_sharp=sharp.sharp(dEdV)
+		tmpGradV+=dEdV
 
 		dSdW=batchProduct.nXone(dSdW,model.W.transpose())
 		dSdU=batchProduct.nXone(dSdU,model.W.transpose())
