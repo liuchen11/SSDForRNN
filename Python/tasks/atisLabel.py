@@ -20,12 +20,12 @@ param['trainXFile']='../atis/train_word1000.csv'
 param['trainYFile']='../atis/train_label1000.csv'
 param['dictFile']='../atis/dict10.csv'
 param['vectorDim']=10
-param['window']=1
+param['window']=3
 param['inputs']=param['vectorDim']*param['window']
-param['hiddens']=10
+param['hiddens']=50
 param['outputs']=128
 param['batch']=25
-param['nEpoch']=1
+param['nEpoch']=10
 param['learnRates']={'U':float(sys.argv[2]),'W':float(sys.argv[3]),
 	'V':float(sys.argv[4]),'s':float(sys.argv[5])}
 param['leftPad']=param['window']/2
