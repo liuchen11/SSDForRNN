@@ -1,8 +1,8 @@
 import sys
-sys.path.insert(0,'./util/')
+sys.path.insert(0,'../util/')
 
 import matrixNorm
 import numpy as np
 
-M=np.random.random([10000,10000])
+M=np.random.random([2000,2000])
 print(matrixNorm.norm(M,1))

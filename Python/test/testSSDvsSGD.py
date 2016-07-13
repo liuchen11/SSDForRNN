@@ -1,7 +1,7 @@
 import sys
-sys.path.insert(0,'./util/')
-sys.path.insert(0,'./models/')
-sys.path.insert(0,'./methods/')
+sys.path.insert(0,'../util/')
+sys.path.insert(0,'../models/')
+sys.path.insert(0,'../methods/')
 
 import RNN
 import sgd_const_lr
@@ -17,21 +17,21 @@ N=10
 H=5
 K=10
 S=50
-nEpoch=3000
+nEpoch=1000
 
 rnn1=RNN.RNN(N,H,K)
 rnn2=rnn1.copy()
 sgd_lr={'W':0.1,'U':0.1,'V':0.1,'s':0.2}
 ssd_lr={'W':0.1,'U':0.1,'V':0.1,'s':0.2}
 
-# states=np.random.randn(S,N)
-# ground_truth=np.zeros([S,K])
+states=np.random.randn(S,N)
+ground_truth=np.zeros([S,K])
 
-# for i in xrange(S):
-# 	spot=random.randint(0,K-1)
-# 	ground_truth[i,spot]=1
+for i in xrange(S):
+	spot=random.randint(0,K-1)
+ 	ground_truth[i,spot]=1
 
-data=cPickle.load(open('./data/50x10in10out'))
+data=cPickle.load(open('../data/50x10in10out'))
 states=data['states']
 ground_truth=data['ground_truth']
 sgd_errs=[]

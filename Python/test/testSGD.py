@@ -1,10 +1,10 @@
 import sys
-sys.path.insert(0,'./util/')
-sys.path.insert(0,'./models/')
-sys.path.insert(0,'./methods/')
+sys.path.insert(0,'../util/')
+sys.path.insert(0,'../models/')
+sys.path.insert(0,'../methods/')
 
 import RNN
-import sgd_const_lr
+import sgd_const_lr as sgd
 import random
 import time
 import numpy as np

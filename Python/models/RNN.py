@@ -1,4 +1,5 @@
 import sys
+from math import sqrt
 sys.path.insert(0,'../util/')
 
 import gradient
@@ -57,12 +58,12 @@ class RNN(object):
 		err=err/num
 		return err,outputs
 
-	def update(self,learning_rates):
+	def update(self,learning_rates,epoch=1):
 		if self.buffer>0:
-			self.U=self.U-self.gU*learning_rates['U']/self.buffer
-			self.W=self.W-self.gW*learning_rates['W']/self.buffer
-			self.V=self.V-self.gV*learning_rates['V']/self.buffer
-			self.s=self.s-self.gs*learning_rates['s']/self.buffer
+			self.U=self.U-self.gU*learning_rates['U']/(self.buffer*sqrt(epoch))
+			self.W=self.W-self.gW*learning_rates['W']/(self.buffer*sqrt(epoch))
+			self.V=self.V-self.gV*learning_rates['V']/(self.buffer*sqrt(epoch))
+			self.s=self.s-self.gs*learning_rates['s']/(self.buffer*sqrt(epoch))
 
 			self.buffer=0
 			self.gU=np.zeros(self.gU.shape)
