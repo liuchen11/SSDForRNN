@@ -10,8 +10,12 @@ lr_sets=[]
 mode=[]
 acc=[]
 
-for i in xrange(len(sys.argv)-1):
-	with open(sys.argv[i+1],'r') as fopen:
+flag=2 if sys.argv[1][0]=='-' else 1
+plot_mode='3d' if flag==1 else sys.argv[1][1:]
+
+
+for i in xrange(len(sys.argv)-flag):
+	with open(sys.argv[i+flag],'r') as fopen:
 		content=fopen.read()
 		lines=content.split('\n')
 		for j in xrange(len(lines)/3):
@@ -41,22 +45,56 @@ lr_sets=np.asarray(lr_sets)
 # 	ax.text(lr_sets[i,0],lr_sets[i,1],lr_sets[i,2],txt,color=mode[i])
 # plt.show()
 
-pca=decomposition.PCA()
-pca.n_components=3
-lr_sets=pca.fit_transform(lr_sets)
-fig=plt.figure()
-ax=fig.gca(projection='3d')
-ax.scatter(lr_sets[:,0],lr_sets[:,1],lr_sets[:,2],mode)
-for i,txt in enumerate(acc):
-	ax.text(lr_sets[i,0],lr_sets[i,1],lr_sets[i,2],txt,color=mode[i])
-plt.show()
 
-# pca=decomposition.PCA()
-# pca.n_components=2
-# lr_sets=pca.fit_transform(lr_sets)
-# fig,ax=plt.subplots()
-# ax.scatter(lr_sets[:,0],lr_sets[:,1],color=mode)
-# for i,txt in enumerate(acc):
-# 	ax.text(lr_sets[i,0],lr_sets[i,1],txt,color=mode[i])
-# plt.show()
+if plot_mode=='3d':
+	pca=decomposition.PCA()
+	pca.n_components=3
+	lr_sets=pca.fit_transform(lr_sets)
+	fig=plt.figure()
+	ax=fig.gca(projection='3d')
+	ax.scatter(lr_sets[:,0],lr_sets[:,1],lr_sets[:,2],mode)
+	for i,txt in enumerate(acc):
+		ax.text(lr_sets[i,0],lr_sets[i,1],lr_sets[i,2],txt,color=mode[i])
+	plt.show()
+	exit(0)
 
+if plot_mode=='2d':
+	pca=decomposition.PCA()
+	pca.n_components=2
+	lr_sets=pca.fit_transform(lr_sets)
+	fig,ax=plt.subplots()
+	ax.scatter(lr_sets[:,0],lr_sets[:,1],color=mode)
+	for i,txt in enumerate(acc):
+		ax.text(lr_sets[i,0],lr_sets[i,1],txt,color=mode[i])
+	plt.show()
+	exit(0)
+
+try:
+	dims=map(int,plot_mode.split(','))
+except:
+	print 'Invalid Parameter: %s'%plot_mode
+	exit(0)
+for dim_index in dims:
+	if not dim_index in range(4):
+		print 'Invalid dimension Index %d'%dim_index
+		exit(0)
+
+if len(dims)==3:
+	fig=plt.figure()
+	ax=fig.gca(projection='3d')
+	ax.scatter(lr_sets[:,dims[0]],lr_sets[:,dims[1]],lr_sets[:,dims[2]],mode)
+	for i,txt in enumerate(acc):
+		ax.text(lr_sets[i,0],lr_sets[i,1],lr_sets[i,2],txt,color=mode[i])
+	plt.show()
+	exit(0)
+
+if len(dims)==2:
+	fig.ax=plt.subplots()
+	ax.scatter(lr_sets[:,0],lr_sets[:,1],color=mode)
+	for i,txt in enumerate(acc):
+		ax.text(lr_sets[i,0],lr_sets[i,1],txt,color=mode[i])
+	plt.show()
+	exit(0)
+
+print 'Invalid Parameter: %s'%dim_index
+exit(0)
