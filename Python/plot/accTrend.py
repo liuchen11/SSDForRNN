@@ -10,7 +10,7 @@ acc=[]
 epoch=0
 
 begin=1
-max_epoch=-1
+max_epoch=-1	#max_epoch control the maximum length of plotted epoches, negative value means no limit
 if len(sys.argv)>3 and sys.argv[1]=='-n':
 	max_epoch=int(sys.argv[2])
 	begin=3
@@ -39,87 +39,19 @@ for i in xrange(len(sys.argv)-begin):
 				mode.append('blue')
 			elif line_mode=='ssd_const_lr':
 				mode.append('red')
-                        else:
-                        	mode.append('black')
+			else
+				mode.append('black')
 
-                                
-if True:
-        for i in xrange(len(acc)):
-	        plt.plot(range(1,len(acc[i])+1),acc[i],mode[i])
-elif False:
-        for i in xrange(len(acc)):
-	        plt.plot(range(1,len(acc[i])+1),acc[i], label='i = %f'%i)
-elif False:
-        for j in xrange(len(acc)/7):
-                for i in [x+7*j for x in [0,1,2,3,4,5,6]]:
-	                plt.plot(range(1,len(acc[i])+1),acc[i], label='i = %f'%i)
-                plt.axis([0, 300, 1000, 4000])
-                plt.legend(loc=1)
-                plt.show()
-        for i in [len(acc)+x for x in [-7,-6,-5,-4,-3,-2,-1]]:
-	        plt.plot(range(1,len(acc[i])+1),acc[i], label='i = %f'%i)
-        plt.axis([0, 300, 1000, 4000])
-        plt.legend(loc=1)
-        plt.show()
-        
-elif False:
-        #17 29 48 51 52
-        #plt.plot(range(1,301),acc[1][0:300], 'blue', linewidth=3, label='SGD, constant learning rate')
-        #plt.plot(range(1,251),acc[0][0:250], 'red', linewidth=5, label='SSD, constant learning rate')
-        #plt.plot(range(1,151),acc[3][0:150], 'red', linewidth=5, label='SSD, constant learning rate')
-        #plt.plot(range(1,301),acc[2][0:300], 'blue', linewidth=3, linestyle='--', label='SGD, decreasing learning rate')
-        #plt.subplot(223)
+fig=plt.figure()
+ax=fig.add_subplot(1,1,1)
+color2label={'blue':'SGD','red':'SSD','black':'RMS'}
+for i in xrange(len(acc)):
+	epoch=len(acc[i]) if max_epoch<0 else min(max_epoch,len(acc[i]))
+	ax.plot(range(1,epoch+1),acc[i][:epoch],mode[i],label=color2label[mode[i]])
 
-        
-        #plt.plot(range(1,251),acc[25][0:250], 'red', linewidth=5, label='SSD, constant learning rate')
-        #plt.plot(range(1,len(acc[29])+1),acc[29], mode[29], linewidth=3)
-        j = -5
-        for i in [x+j for x in [17,29,51]]:
-                plt.plot(range(1,len(acc[i])+1),acc[i], mode[i], linewidth=3)
-        
-elif False:
-        figure = plt.figure()
-        figure.subplots_adjust(left = 0.12, bottom = 0.1, right = 0.95, top = 0.95, wspace = 0.35, hspace = 0)
-        plt.subplot(121)
-        plt.plot(range(1,301),acc[16][0:300], 'blue', linewidth=3, label='SGD, constant LR')
-        plt.plot(range(1,151),acc[29][0:150], 'red', linewidth=5, label='SSD, constant LR')
-        plt.plot(range(1,301),acc[2][0:300], 'blue', linewidth=3, linestyle='--', label='SGD, decreasing LR')
-        plt.xlabel('Epoch', fontsize=17)
-        plt.axis([0, 300, 1000, 4000])
-        plt.ylabel('Training Error', fontsize=17)
-
-        plt.subplot(122)
-        plt.plot(range(1,301),acc[16+30][0:300], 'blue', linewidth=3, label='SGD, constant LR')
-        plt.plot(range(1,151),acc[29+30][0:150], 'red', linewidth=5, label='SSD, constant LR')
-        plt.plot(range(1,301),acc[2+30][0:300], 'blue', linewidth=3, linestyle='--', label='SGD, decreasing LR')
-        plt.xlabel('Epoch', fontsize=17)
-        plt.axis([0, 300, 1000, 4000])
-        plt.ylabel('Testing Error', fontsize=17)
-        plt.legend(loc=1)
-
-        
-elif False:
-        #plt.subplot(223)
-        
-        plt.plot(range(1,501),acc[14][0:500], 'blue', linewidth=3, label='SGD, constant learning rate')
-        plt.plot(range(1,251),acc[29][0:250], 'red', linewidth=5, label='SSD, constant learning rate')
-        plt.plot(range(1,501),acc[34][0:500], 'blue', linewidth=3, linestyle='--', label='SGD, decreasing learning rate')
-
-#plt.title('TEST', fontsize=23)
-
-else True:
-        fig=plt.figure()
-        ax=fig.add_subplot(1,1,1)
-        color2label={'blue':'SGD','red':'SSD'}
-        for i in xrange(len(acc)):
-	        epoch=len(acc[i]) if max_epoch==-1 else min(max_epoch,len(acc[i]))
-	        ax.plot(range(1,epoch+1),acc[i][:epoch],mode[i],label=color2label[mode[i]])
-
-        handles,labels=ax.get_legend_handles_labels()
-        by_label=OrderedDict(zip(labels,handles))
-        ax.legend(by_label.values(),by_label.keys())
-        ax.set_xlabel('Epoch')
-        ax.set_ylabel('Loss')
-
-        
+handles,labels=ax.get_legend_handles_labels()
+by_label=OrderedDict(zip(labels,handles))
+ax.legend(by_label.values(),by_label.keys())
+ax.set_xlabel('Epoch')
+ax.set_ylabel('Loss')
 plt.show()

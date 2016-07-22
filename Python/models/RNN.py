@@ -2,12 +2,20 @@ import sys
 from math import sqrt
 sys.path.insert(0,'../util/')
 
+import cPickle
 import gradient
 import softmax
 import numpy as np
 
+'''
+>>> 1-layer Recurrent Neural Network model
+'''
 class RNN(object):
 
+	'''
+	>>> Constructor
+	>>> Parameters are initialized according to a Gussian distribution
+	'''
 	def __init__(self,input_size,hidden_size,output_size):
 		self.input_size=input_size
 		self.hidden_size=hidden_size
@@ -22,9 +30,15 @@ class RNN(object):
 		self.gs=np.zeros([hidden_size])
 		self.buffer=0
 
+	'''
+	>>> Get the size of the network
+	'''
 	def size(self):
 		return self.input_size,self.hidden_size,self.output_size
 
+	'''
+	>>> Make a deep copy of current network, including the size and the parameters
+	'''
 	def copy(self):
 		ret=RNN(self.input_size,self.hidden_size,self.output_size)
 		ret.U=np.copy(self.U)
@@ -38,6 +52,11 @@ class RNN(object):
 		ret.buffer=self.buffer
 		return ret
 
+	'''
+	>>> Given a sequence and its ground truth, calculate the prediction of the network and corresponding loss
+	>>> states: Input states. 2-D array of shape S*N where S is the sequence length and N is the input dimension
+	>>> ground_truth: Labels. 2-D array of shape S*H where S is the sequence length and H is the number of labels
+	'''
 	def runTokens(self,states,ground_truth):
 		err=0.0
 		outputs=[]
@@ -58,6 +77,10 @@ class RNN(object):
 		err=err/num
 		return err,outputs
 
+	'''
+	>>> Update parameters according to specified learning rates
+	>>> epoch: When epoch is not 1, learning rate decay is enabled
+	'''
 	def update(self,learning_rates,epoch=1):
 		if self.buffer>0:
 			self.U=self.U-self.gU*learning_rates['U']/(self.buffer*sqrt(epoch))
@@ -71,4 +94,19 @@ class RNN(object):
 			self.gV=np.zeros(self.gV.shape)
 			self.gs=np.zeros(self.gs.shape)
 
+	'''
+	>>> Return the Euclidean norm (steps) of the gradient of all parameters
+	'''
+	def gradient_steps(self,learning_rates):
+			vec_gU=self.gU.reshape(self.gU.size)*learning_rates['U']
+			vec_gW=self.gW.reshape(self.gW.size)*learning_rates['W']
+			vec_gV=self.gV.reshape(self.gV.size)*learning_rates['V']
+			vec_gs=self.gs.reshape(self.gs.size)*learning_rates['s']
+			vec_grad=np.concatenate([vec_gU,vec_gW,vec_gV,vec_gs],axis=0)
+			return np.linalg.norm(vec_grad,2)
 
+	'''
+	>>> save the model
+	'''
+	def save(self,out_file):
+		cPickle.dump([self.U,self.W,self.V,self.s],open(out_file,'w'))

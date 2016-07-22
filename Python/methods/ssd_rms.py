@@ -1,6 +1,7 @@
 import sys
 sys.path.insert(0,'../models/')
 sys.path.insert(0,'../util/')
+import numpy as np
 
 import gradient
 import vectorNorm
@@ -8,17 +9,17 @@ import sharp
 import batchProduct
 import softmax
 import RNN
-import numpy as np
-import pickle
+from elementwise import *
 
 '''
->>> SGD using const learning rate
->>>model: RNN
+>>> RMSprop Optimizer based on SSD
+>>> model: RNN
 >>> states: Input states. 2-D array of shape S*N where S is the sequence length and N is the input dimension
 >>> ground_truth: Labels. 2-D array of shape S*H where S is the sequence length and H is the number of labels
+>>> alpha: float in (0,1). E_t=alpha*E_{t-1}+(1-alpha)*g_t^2 para-=\\frac{\\eta}{\sqrt{E_t+\\epsilon}}
 >>> trainonly: Controling training or test model. Boolean.
 '''
-def ssd(model,states,ground_truth,trainonly=True):
+def rms(model,states,ground_truth,alpha=0.5,trainonly=True):
 
 		if trainonly:
 
@@ -36,7 +37,12 @@ def ssd(model,states,ground_truth,trainonly=True):
 			dSdU=np.zeros([hidden_size,input_size,hidden_size])
 			dSds=np.eye(hidden_size)
 
-			for index in xrange(num):
+			lambdaW=np.ones([hidden_size,hidden_size])
+			lambdaU=np.ones([hidden_size,input_size])
+			VW=np.zeros([hidden_size,hidden_size])
+			VU=np.zeros([hidden_size,input_size])
+
+	        for index in xrange(num):
 				input_part=np.dot(model.U,states[index])
 				recur_part=np.dot(model.W,hidden_states)
 				new_states=gradient.sigmoid(input_part+recur_part)
@@ -44,17 +50,17 @@ def ssd(model,states,ground_truth,trainonly=True):
 				soft=softmax.softmax(proj)
 				logsoft=np.log(soft)
 				err-=np.dot(ground_truth[index],logsoft)
-				        
+
 				dis=soft-ground_truth[index]
 				lamb=gradient.dsigmoid(input_part+recur_part)
 				Lamb=np.diag(lamb)
-				        
+
 				dEdV=np.dot(dis.reshape(output_size,1),new_states.reshape(1,hidden_size))
 				tmpGradV+=dEdV
 
 				dSdW=batchProduct.nXone(dSdW,model.W.transpose())
 				dSdU=batchProduct.nXone(dSdU,model.W.transpose())
-		        for i in xrange(hidden_size):
+				for i in xrange(hidden_size):
 					for j in xrange(hidden_size):
 						dSdW[i,j,i]+=hidden_states[j]
 					for j in xrange(input_size):
@@ -66,14 +72,16 @@ def ssd(model,states,ground_truth,trainonly=True):
 				dEdW=batchProduct.nXone(dSdW,dEdS).squeeze()
 				dEdU=batchProduct.nXone(dSdU,dEdS).squeeze()
 
-				# pickle.dump(dEdW, open('dEdW3.p', 'wb'))
-				# pickle.dump(dEdU, open('dEdU3.p', 'wb'))
-
-				dEdW_sharp=sharp.sharp(dEdW)
-				dEdU_sharp=sharp.sharp(dEdU)
+				VW=alpha*VW+(1-alpha)*np.power(dEdW,2)
+				VU=alpha*VU+(1-alpha)*np.power(dEdW,2)
+				DW=np.sqrt(lambdaW+np.sqrt(VW))
+				DU=np.sqrt(lambdaU+np.sqrt(VU))
+				dEdW_sharp=np.divide(sharp.sharp(np.divide(dEdW,DW)), DW)
+				dEdU_sharp=np.divide(sharp.sharp(np.divide(dEdU,DU)), DU)
+				
 				tmpGradW+=dEdW_sharp
 				tmpGradU+=dEdU_sharp
-
+				        
 				dSds=np.dot(np.dot(Lamb,model.W),dSds)
 				dEds=np.dot(dSds.transpose(),dEdS).squeeze()
 				tmpGrads+=dEds
@@ -88,11 +96,12 @@ def ssd(model,states,ground_truth,trainonly=True):
 			model.gs+=tmpGrads/num
 
 		else:
+
 			test_input_size,test_hidden_size,test_output_size=model.size()
 			test_num=len(states)
 
 			test_err=0.0
-
+			    
 			test_hidden_states=model.s
 
 			for index in xrange(test_num):

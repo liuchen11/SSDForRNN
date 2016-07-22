@@ -3,7 +3,7 @@ import os
 import sys
 
 def tunem():
-    	os.system('python tuneLR.py all 0.005 0.01 1')
+	os.system('python tuneLR.py all 0.005 0.01 1')
 
 def tunec(n):
 	param = getparam(n)
@@ -44,8 +44,6 @@ def getparam(n):
 	param['s'] = allparam[n][3]
 	return param
 
-
-
 witchparams = [14]
 
 pool = Pool()
@@ -60,16 +58,16 @@ else:
 	result = []
 	answer = []
 	for i in xrange(Nprocess):
-	        result.append(0);
+		result.append(0);
 	 	answer.append(0);
 	if len(sys.argv)>=2:
 		for i in xrange(Nprocess):
 			result[i] = pool.apply_async(tunec, args=(witchparams[i],))
 	else:
 		for i in xrange(Nprocess):
-		    	result[i] = pool.apply_async(tunem)    # evaluate "solve1(A)" asynchronously
+			result[i] = pool.apply_async(tunem)    # evaluate "solve1(A)" asynchronously
 
 	for i in xrange(Nprocess):
-	    	answer[i] = result[i].get(timeout=1000000)
+		answer[i] = result[i].get(timeout=1000000)
 
 
