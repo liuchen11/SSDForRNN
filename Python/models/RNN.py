@@ -14,7 +14,10 @@ class RNN(object):
 
 	'''
 	>>> Constructor
+	>>> self.gU,self.gW,self.gV,self.gs: the gradient of the corresponding parameters
 	>>> Parameters are initialized according to a Gussian distribution
+	>>> self.buffer: int. Number of buffered training instance. We flush the buffer when this number meets the size of batch
+	>>> self.VU,self.VW,self.VV,self.Vs: Matrix of the same shape as the corresponding parameters. Used to control the magnitude of the learning rate in RMS and Adagrad.
 	'''
 	def __init__(self,input_size,hidden_size,output_size):
 		self.input_size=input_size
@@ -24,10 +27,14 @@ class RNN(object):
 		self.W=np.random.randn(hidden_size,hidden_size)*0.5
 		self.V=np.random.randn(output_size,hidden_size)*0.5
 		self.s=np.random.randn(hidden_size)*0.5
-		self.gU=np.zeros([hidden_size,input_size])
-		self.gW=np.zeros([hidden_size,hidden_size])
-		self.gV=np.zeros([output_size,hidden_size])
-		self.gs=np.zeros([hidden_size])
+		self.gU=np.zeros(self.U.shape)
+		self.gW=np.zeros(self.W.shape)
+		self.gV=np.zeros(self.V.shape)
+		self.gs=np.zeros(self.s.shape)
+		self.VU=np.zeros(self.U.shape)
+		self.VW=np.zeros(self.W.shape)
+		self.VV=np.zeros(self.V.shape)
+		self.Vs=np.zeros(self.s.shape)
 		self.buffer=0
 
 	'''
@@ -79,20 +86,21 @@ class RNN(object):
 
 	'''
 	>>> Update parameters according to specified learning rates
-	>>> epoch: When epoch is not 1, learning rate decay is enabled
+	>>> learning_rate: dict[string -> float]. learning_rate['U'] means the learning rate of matrix U and so on.
+	>>> decay: float, optional. Learning rate decay coefficient.
 	'''
-	def update(self,learning_rates,epoch=1):
-		if self.buffer>0:
-			self.U=self.U-self.gU*learning_rates['U']/(self.buffer*sqrt(epoch))
-			self.W=self.W-self.gW*learning_rates['W']/(self.buffer*sqrt(epoch))
-			self.V=self.V-self.gV*learning_rates['V']/(self.buffer*sqrt(epoch))
-			self.s=self.s-self.gs*learning_rates['s']/(self.buffer*sqrt(epoch))
+	def update(self,learning_rates,decay=1):
 
-			self.buffer=0
-			self.gU=np.zeros(self.gU.shape)
-			self.gW=np.zeros(self.gW.shape)
-			self.gV=np.zeros(self.gV.shape)
-			self.gs=np.zeros(self.gs.shape)
+		self.U=self.U-self.gU*learning_rates['U']/sqrt(decay)
+		self.W=self.W-self.gW*learning_rates['W']/sqrt(decay)
+		self.V=self.V-self.gV*learning_rates['V']/sqrt(decay)
+		self.s=self.s-self.gs*learning_rates['s']/sqrt(decay)
+
+		self.buffer=0
+		self.gU=np.zeros(self.gU.shape)
+		self.gW=np.zeros(self.gW.shape)
+		self.gV=np.zeros(self.gV.shape)
+		self.gs=np.zeros(self.gs.shape)
 
 	'''
 	>>> Return the Euclidean norm (steps) of the gradient of all parameters
