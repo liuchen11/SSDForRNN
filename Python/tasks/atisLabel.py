@@ -28,25 +28,25 @@ maketest=True
 decreasingLR=True
 param={}
 param['mode']=sys.argv[1]
-param['trainXFile']='../atis/train_word1000.csv'		#Sentences in training set
-param['trainYFile']='../atis/train_label1000.csv'		#Labels in training set
-param['dictFile']='../atis/dict10.csv'					#Pretrained dict to map words to vectors
-param['vectorDim']=100									#The dimension of word vectors
-param['window']=3										#The length of the sliding windows
-param['inputs']=param['vectorDim']*param['window']		#Input dimension
-param['hiddens']=50										#Dimension of hidden state
-param['outputs']=128									#Output dimension
-param['batch']=25										#Batch size
-param['nEpoch']=1000									#Number of training epochs
+param['trainXFile']='../atis/train_word1000.csv'	#Sentences in training set
+param['trainYFile']='../atis/train_label1000.csv'	#Labels in training set
+param['dictFile']='../atis/dict10.csv'			#Pretrained dict to map words to vectors
+param['vectorDim']=100					#The dimension of word vectors
+param['window']=3					#The length of the sliding windows
+param['inputs']=param['vectorDim']*param['window']	#Input dimension
+param['hiddens']=50					#Dimension of hidden state
+param['outputs']=128					#Output dimension
+param['batch']=25					#Batch size
+param['nEpoch']=1000					#Number of training epochs
 param['learnRates']={'U':float(sys.argv[2]),'W':float(sys.argv[3]),
-	'V':float(sys.argv[4]),'s':float(sys.argv[5])}		#Learning rate of each parameter matrices
-param['leftPad']=param['window']/2						#Padding length
-param['outputMode']=sys.argv[6]							#Append or rewrite the output file
-param['outfile']='train_' + sys.argv[7]					#Output file containing the results on training set
-param['test_outfile']='test_' + sys.argv[7]				#Output file containing the results on test set
-param['numberOfSave']=9									#The index of the saved file
-param['alpha']=random()									#A parameter used in RMSprop optimizer
-param['dcrorcst']='cst'									#Decreasing learning rate or const learning rate
+	'V':float(sys.argv[4]),'s':float(sys.argv[5])}	#Learning rate of each parameter matrices
+param['leftPad']=param['window']/2			#Padding length
+param['outputMode']=sys.argv[6]				#Append or rewrite the output file
+param['outfile']='train_' + sys.argv[7]		   #Output file containing the results on training set
+param['test_outfile']='test_' + sys.argv[7]	       #Output file containing the results on test set
+param['numberOfSave']=9					#The index of the saved file
+param['alpha']=random()					#A parameter used in RMSprop optimizer
+param['dcrorcst']='cst'				      #Decreasing learning rate or const learning rate
 if decreasingLR:
 	param['dcrorcst'] = 'dcr'
 
@@ -209,6 +209,15 @@ if param['mode']=='ssd_const_lr':
 #                    #
 ######################
 
+if param['mode']=='sgd_rms':
+        print 'Not implemented yet'
+                
+######################
+#                    #
+#   Start RMSspec    #
+#                    #
+######################
+
 if param['mode']=='ssd_rms':
 	begin=time.time()
 	lr_decay=1
@@ -248,6 +257,26 @@ if param['mode']=='ssd_rms':
 	if maketest:
 		test_results+='\n'
 		test_results+='time=%.2f\n'%(end-begin)
+
+######################
+#                    #
+#   Start ADAprop    #
+#                    #
+######################
+
+if param['mode']=='sgd_adagrad':
+        print 'Not implemented yet'
+        
+######################
+#                    #
+#   Start ADAspec    #
+#                    #
+######################
+if param['mode']=='ssd_adagrad':
+        print 'Not implemented yet'
+                
+
+
 
 with open(param['outfile'],param['outputMode']) as fopen:
 	fopen.write(results)
