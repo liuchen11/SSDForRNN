@@ -106,12 +106,12 @@ class RNN(object):
 	>>> Return the Euclidean norm (steps) of the gradient of all parameters
 	'''
 	def gradient_steps(self,learning_rates):
-			vec_gU=self.gU.reshape(self.gU.size)*learning_rates['U']
-			vec_gW=self.gW.reshape(self.gW.size)*learning_rates['W']
-			vec_gV=self.gV.reshape(self.gV.size)*learning_rates['V']
-			vec_gs=self.gs.reshape(self.gs.size)*learning_rates['s']
-			vec_grad=np.concatenate([vec_gU,vec_gW,vec_gV,vec_gs],axis=0)
-			return np.linalg.norm(vec_grad,2)
+		vec_gU=self.gU.reshape(self.gU.size)*learning_rates['U']
+		vec_gW=self.gW.reshape(self.gW.size)*learning_rates['W']
+		vec_gV=self.gV.reshape(self.gV.size)*learning_rates['V']
+		vec_gs=self.gs.reshape(self.gs.size)*learning_rates['s']
+		vec_grad=np.concatenate([vec_gU,vec_gW,vec_gV,vec_gs],axis=0)
+		return np.linalg.norm(vec_grad,2)
 
 	'''
 	>>> save the model

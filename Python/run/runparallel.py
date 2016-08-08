@@ -15,11 +15,11 @@ import sys
 >>> Start a training with random parameters
 '''
 def tunem():
-        os.system('python tuneLR.py all 0.005 0.01 1')
+	os.system('python tuneLR.py all 0.005 0.01 1')
 
 
 
-        
+
 '''
 >>> Start a training with chosen parameters
 >>> n: integer which defines one set of parameters
@@ -31,11 +31,11 @@ def tunec(n):
 
 
 
-        
+
 '''
 >>> Return a set of chosen parameters
 >>> n: integer which defines the set of parameters
-'''        
+'''
 def getparam(n):
 	allmode = []
 	for i in xrange(10):
@@ -49,7 +49,7 @@ def getparam(n):
 	allparam = allparam + [[0.0053, 0.0058, 0.0084, 0.007]]
 	allparam = allparam + [[0.0065, 0.0085, 0.0086, 0.0051]]
 	allparam = allparam + [[0.0063, 0.0052, 0.0076, 0.0065]]
-        allparam = allparam + [[0.006, 0.007, 0.0091, 0.0054]]
+	allparam = allparam + [[0.006, 0.007, 0.0091, 0.0054]]
 	allparam = allparam + [[0.0067, 0.0081, 0.0092, 0.0091]]
 	allparam = allparam + [[0.0055, 0.0057, 0.0079, 0.0091]]
 	allparam = allparam + [[0.0052, 0.0077, 0.0094, 0.0077]]
@@ -75,18 +75,18 @@ def getparam(n):
 
 
 if len(sys.argv)<2:
-        Nprocess = 1
+	Nprocess = 1
 else:
-        Nprocess = int(sys.argv[1])
+	Nprocess = int(sys.argv[1])
 if Nprocess < 1:
-        Nprocess = 1
+	Nprocess = 1
 
 whichparams = []
 if Nprocess < len(sys.argv)-1:
-        for i in sys.argv[2:Nprocess+1]:
-                whichparams.append(int(i))
-        
-        
+	for i in sys.argv[2:Nprocess+1]:
+		whichparams.append(int(i))
+
+
 
 pool = Pool()
 
@@ -100,15 +100,13 @@ else:
 	answer = []
 	for i in xrange(Nprocess):
 		result.append(0);
-	 	answer.append(0);
+		answer.append(0);
 	if len(whichparams)>=1:
 		for i in xrange(Nprocess):
 			result[i] = pool.apply_async(tunec, args=(witchparams[i],))
 	else:
 		for i in xrange(Nprocess):
-			result[i] = pool.apply_async(tunem)    # evaluate "solve1(A)" asynchronously
+			result[i] = pool.apply_async(tunem)
 
 	for i in xrange(Nprocess):
 		answer[i] = result[i].get(timeout=1000000)
-
-

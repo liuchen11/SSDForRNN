@@ -44,8 +44,8 @@ if mode=='all' or mode=='sgd_const_lr' or mode=='sgd' or mode=='const_lr':
 		lr=np.zeros(4)
 		for j in xrange(4):
 			lr[j]=p1*rate**random.random()
-		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'%(
-			'sgd_const_lr',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
+		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
+		          %('sgd_const_lr',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
 
 if mode=='all' or mode=='ssd_const_lr' or mode=='ssd' or mode=='const_lr':
 	rate=p2/p1
@@ -53,8 +53,8 @@ if mode=='all' or mode=='ssd_const_lr' or mode=='ssd' or mode=='const_lr':
 		lr=np.zeros(4)
 		for j in xrange(4):
 			lr[j]=p1*rate**random.random()
-		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'%(
-			'ssd_const_lr',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
+		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
+		          %('ssd_const_lr',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
 
 if mode=='all' or mode=='sgd_rms' or mode=='sgd' or mode=='rms':
 	rate=p2/p1
@@ -62,8 +62,8 @@ if mode=='all' or mode=='sgd_rms' or mode=='sgd' or mode=='rms':
 		lr=np.zeros(4)
 		for j in xrange(4):
 			lr[j]=p1*rate**random.random()
-		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'%(
-			'sgd_rms',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
+		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
+		          %('sgd_rms',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
 
 
 if mode=='all' or mode=='ssd_rms' or mode=='ssd' or mode=='rms':
@@ -72,8 +72,8 @@ if mode=='all' or mode=='ssd_rms' or mode=='ssd' or mode=='rms':
 		lr=np.zeros(4)
 		for j in xrange(4):
 			lr[j]=p1*rate**random.random()
-		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'%(
-			'ssd_rms',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
+		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
+		          %('ssd_rms',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
 
 
 if mode=='all' or mode=='sgd_adagrad' or mode=='sgd' or mode=='adagrad':
@@ -82,8 +82,8 @@ if mode=='all' or mode=='sgd_adagrad' or mode=='sgd' or mode=='adagrad':
 		lr=np.zeros(4)
 		for j in xrange(4):
 			lr[j]=p1*rate**random.random()
-		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'%(
-			'sgd_adagrad',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
+		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
+		          %('sgd_adagrad',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
 
 
 if mode=='all' or mode=='ssd_adagrad' or mode=='ssd' or mode=='adagrad':
@@ -92,5 +92,5 @@ if mode=='all' or mode=='ssd_adagrad' or mode=='ssd' or mode=='adagrad':
 		lr=np.zeros(4)
 		for j in xrange(4):
 			lr[j]=p1*rate**random.random()
-		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'%(
-			'ssd_adagrad',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
+		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
+		          %('ssd_adagrad',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))

@@ -43,7 +43,7 @@ def sgd(model,states,ground_truth,trainonly=True):
 			soft=softmax.softmax(proj)
 			logsoft=np.log(soft)
 			err-=np.dot(ground_truth[index],logsoft)
-			        
+			
 			dis=soft-ground_truth[index]
 			lamb=gradient.dsigmoid(input_part+recur_part)
 			Lamb=np.diag(lamb)

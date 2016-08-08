@@ -42,7 +42,7 @@ param['learnRates']={'U':float(sys.argv[2]),'W':float(sys.argv[3]),
 	'V':float(sys.argv[4]),'s':float(sys.argv[5])}	#Learning rate of each parameter matrices
 param['leftPad']=param['window']/2			#Padding length
 param['outputMode']=sys.argv[6]				#Append or rewrite the output file
-param['outfile']='train_' + sys.argv[7]		   #Output file containing the results on training set
+param['outfile']='train_' + sys.argv[7] 	   #Output file containing the results on training set
 param['test_outfile']='test_' + sys.argv[7]	       #Output file containing the results on test set
 param['numberOfSave']=9					#The index of the saved file
 param['alpha']=random()					#A parameter used in RMSprop optimizer
@@ -66,11 +66,11 @@ train_num=len(train_index)
 trainX=[]
 trainY=[]
 
-########################################
-#                                      #
-#       Preprocessing the data         #
-#                                      #
-########################################
+##########################################
+#                                        #
+#         Preprocessing the data         #
+#                                        #
+##########################################
 
 for i in xrange(train_num):
 	sentence_len=len(train_index[i])
@@ -159,7 +159,7 @@ if param['mode']=='sgd_const_lr':
 
 ######################
 #                    #
-#      Start SSD     #
+#     Start SSD      #
 #                    #
 ######################
 
@@ -210,8 +210,8 @@ if param['mode']=='ssd_const_lr':
 ######################
 
 if param['mode']=='sgd_rms':
-        print 'Not implemented yet'
-                
+	print 'Not implemented yet'
+	
 ######################
 #                    #
 #   Start RMSspec    #
@@ -265,16 +265,16 @@ if param['mode']=='ssd_rms':
 ######################
 
 if param['mode']=='sgd_adagrad':
-        print 'Not implemented yet'
-        
+	print 'Not implemented yet'
+
 ######################
 #                    #
 #   Start ADAspec    #
 #                    #
 ######################
 if param['mode']=='ssd_adagrad':
-        print 'Not implemented yet'
-                
+	print 'Not implemented yet'
+
 
 
 

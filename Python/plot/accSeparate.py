@@ -28,7 +28,7 @@ with open(sys.argv[i+1],'r') as fopen:
 			line_acc.append(float(results_part[i+1]))
 		if line_acc[0]<line_acc[-1]:
 			continue
-                lr_sets.append([line_U_lr,line_W_lr,line_V_lr,line_s_lr])
+		lr_sets.append([line_U_lr,line_W_lr,line_V_lr,line_s_lr])
 		acc.append(line_acc)
 		if line_mode=='sgd_const_lr':
 			mode.append('blue')
@@ -36,16 +36,16 @@ with open(sys.argv[i+1],'r') as fopen:
 			mode.append('red')
 
 if len(sys.argv)>2:
-        deb = 0
-        nbr = int(sys.argv[2])
-        while deb*nbr<len(acc):
-                for j in xrange(nbr):
-                        if deb*nbr+j<len(acc):
-                            plt.plot(range(1,epoch+1),acc[deb*nbr+j],mode[deb*nbr+j])
-                            
-                plt.show()
-                deb=deb+1
+	deb = 0
+	nbr = int(sys.argv[2])
+	while deb*nbr<len(acc):
+		for j in xrange(nbr):
+			if deb*nbr+j<len(acc):
+				plt.plot(range(1,epoch+1),acc[deb*nbr+j],mode[deb*nbr+j])
+		
+		plt.show()
+		deb=deb+1
 else:
-        for i in xrange(len(acc)):
-	        plt.plot(range(1,epoch+1),acc[i],mode[i])
-        plt.show()
+	for i in xrange(len(acc)):
+		plt.plot(range(1,epoch+1),acc[i],mode[i])
+	plt.show()
