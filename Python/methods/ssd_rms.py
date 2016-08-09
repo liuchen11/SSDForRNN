@@ -73,7 +73,7 @@ def rms(model,states,ground_truth,alpha=0.5,trainonly=True):
 			dEdU=batchProduct.nXone(dSdU,dEdS).squeeze()
 			
 			VW=alpha*VW+(1-alpha)*np.power(dEdW,2)
-			VU=alpha*VU+(1-alpha)*np.power(dEdW,2)
+			VU=alpha*VU+(1-alpha)*np.power(dEdU,2)
 			DW=np.sqrt(lambdaW+np.sqrt(VW))
 			DU=np.sqrt(lambdaU+np.sqrt(VU))
 			dEdW_sharp=np.divide(sharp.sharp(np.divide(dEdW,DW)), DW)

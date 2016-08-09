@@ -18,8 +18,6 @@ def tunem():
 	os.system('python tuneLR.py all 0.005 0.01 1')
 
 
-
-
 '''
 >>> Start a training with chosen parameters
 >>> n: integer which defines one set of parameters
