@@ -31,8 +31,8 @@ def sgd(model,states,ground_truth,trainonly=True):
 		tmpGrads=np.zeros(model.gs.shape)
 
 		hidden_states=model.s
-		dSdW=np.zeros([hidden_size,hidden_size,hidden_size])
-		dSdU=np.zeros([hidden_size,input_size,hidden_size])
+		dSdW=np.zeros([hidden_size,hidden_size,hidden_size])	#dSdW[i,j,k]=\frac{\partial s[k]}{\partial W[i,j]}
+		dSdU=np.zeros([hidden_size,input_size,hidden_size])		#dSdU[i,j,k]=\frac{\partial s[k]}{\partial U[i,j]}
 		dSds=np.eye(hidden_size)
 
 		for index in xrange(num):

@@ -6,6 +6,7 @@ import numpy as np
 import math
 import gradient
 import softmax
+import sharp
 import vectorNorm
 import batchProduct
 import RNN
@@ -16,7 +17,7 @@ import RNN
 >>> states: Input states. 2-D array of shape S*N where S is the sequence length and N is the input dimension
 >>> ground_truth: Labels. 2-D array of shape S*H where S is the sequence length and H is the number of labels
 '''
-def grad(model,states,ground_truth):
+def sgd(model,states,ground_truth):
 
 	input_size,hidden_size,output_size=model.size()
 	num=len(states)
@@ -26,6 +27,94 @@ def grad(model,states,ground_truth):
 	tmpGradW=np.zeros(model.gW.shape)
 	tmpGradV=np.zeros(model.gV.shape)
 	tmpGrads=np.zeros(model.gs.shape)
+	tmpDeltaU=np.zeros(model.dU.shape)
+	tmpDeltaW=np.zeros(model.dW.shape)
+	tmpDeltaV=np.zeros(model.dV.shape)
+	tmpDeltas=np.zeros(model.ds.shape)
+
+	hidden_states=model.s
+	dSdW=np.zeros([hidden_size,hidden_size,hidden_size])	#dSdW[i,j,k]=\frac{\partial s[k]}{\partial W[i,j]}
+	dSdU=np.zeros([hidden_size,input_size,hidden_size])		#dSdU[i,j,k]=\frac{\partial s[k]}{\partial U[i,j]}
+	dSds=np.eye(hidden_size)
+
+	for index in xrange(num):
+		input_part=np.dot(model.U,states[index])
+		recur_part=np.dot(model.W,hidden_states)
+		new_states=gradient.sigmoid(input_part+recur_part)
+		proj=np.dot(model.V,new_states)
+		soft=softmax.softmax(proj)
+		logsoft=np.log(soft)
+		err-=np.dot(ground_truth[index],logsoft)
+
+		dis=soft-ground_truth[index]
+		lamb=gradient.dsigmoid(input_part+recur_part)
+		Lamb=np.diag(lamb)
+
+		dEdV=np.dot(dis.reshape(output_size,1),new_states.reshape(1,hidden_size))
+		tmpGradV+=dEdV
+		tmpDeltaV+=np.divide(dEdV,model.DV)
+
+		dSdW=batchProduct.nXone(dSdW,model.W.transpose())
+		dSdU=batchProduct.nXone(dSdU,model.W.transpose())
+		for i in xrange(hidden_size):
+			for j in xrange(hidden_size):
+				dSdW[i,j,i]+=hidden_states[j]
+			for j in xrange(input_size):
+				dSdU[i,j,i]+=states[index][j]
+
+		dSdW=batchProduct.nXone(dSdW,Lamb)
+		dSdU=batchProduct.nXone(dSdU,Lamb)
+		dEdS=np.dot(model.V.transpose(),dis.reshape(output_size,1))
+		dEdW=batchProduct.nXone(dSdW,dEdS).squeeze()
+		dEdU=batchProduct.nXone(dSdU,dEdS).squeeze()
+
+		tmpGradW+=dEdW
+		tmpDeltaW+=np.divide(dEdW,model.DW)
+		tmpGradU+=dEdU
+		tmpDeltaU+=np.divide(dEdU,model.DU)
+
+		dSds=np.dot(np.dot(Lamb,model.W),dSds)
+		dEds=np.dot(dSds.transpose(),dEdS).squeeze()
+		tmpGrads+=dEds
+		tmpDeltas+=np.divide(dEds,model.Ds)
+
+		hidden_states=new_states
+
+	err=err/num
+	model.buffer+=1
+	model.gU+=tmpGradU/num
+	model.gW+=tmpGradW/num
+	model.gV+=tmpGradV/num
+	model.gs+=tmpGrads/num
+	model.dU+=tmpDeltaU/num
+	model.dW+=tmpDeltaW/num
+	model.dV+=tmpDeltaV/num
+	model.ds+=tmpDeltas/num
+
+	return err
+
+'''
+>>> Calculate the gradient of each parameter matrix and update its accumulative gradient
+>>> model: RNN
+>>> states: Input states. 2-D array of shape S*N where S is the sequence length and N is the input dimension
+>>> ground_truth: Labels. 2-D array of shape S*H where S is the sequence length and H is the number of labels
+'''
+def ssd(model,states,ground_truth):
+
+	input_size,hidden_size,output_size=model.size()
+	num=len(states)
+
+	err=0.0
+	tmpGradU=np.zeros(model.gU.shape)
+	tmpGradW=np.zeros(model.gW.shape)
+	tmpGradV=np.zeros(model.gV.shape)
+	tmpGrads=np.zeros(model.gs.shape)
+	tmpDeltaU=np.zeros(model.dU.shape)
+	tmpDeltaW=np.zeros(model.dW.shape)
+	tmpDeltaV=np.zeros(model.dV.shape)
+	tmpDeltas=np.zeros(model.ds.shape)
+	sqrtDU=np.sqrt(model.DU)
+	sqrtDW=np.sqrt(model.DW)
 
 	hidden_states=model.s
 	dSdW=np.zeros([hidden_size,hidden_size,hidden_size])	#dSdW[i,j,k]=\frac{\partial s[k]}{\partial W[i,j]}
@@ -48,6 +137,7 @@ def grad(model,states,ground_truth):
 		dEdV=np.dot(dis.reshape(output_size,1),new_states.reshape(1,hidden_size))
 
 		tmpGradV+=dEdV
+		tmpDeltaV+=np.divide(dEdV,model.DV)
 
 		dSdW=batchProduct.nXone(dSdW,model.W.transpose())
 		dSdU=batchProduct.nXone(dSdU,model.W.transpose())
@@ -64,11 +154,14 @@ def grad(model,states,ground_truth):
 		dEdU=batchProduct.nXone(dSdU,dEdS).squeeze()
 
 		tmpGradW+=dEdW
+		tmpDeltaW+=np.divide(sharp.sharp(np.divide(dEdW,sqrtDW)),sqrtDW)
 		tmpGradU+=dEdU
+		tmpDeltaU+=np.divide(sharp.sharp(np.divide(dEdU,sqrtDU)),sqrtDU)
 
 		dSds=np.dot(np.dot(Lamb,model.W),dSds)
 		dEds=np.dot(dSds.transpose(),dEdS).squeeze()
 		tmpGrads+=dEds
+		tmpDeltas+=np.divide(dEds,model.Ds)
 
 		hidden_states=new_states
 
@@ -78,5 +171,9 @@ def grad(model,states,ground_truth):
 	model.gW+=tmpGradW/num
 	model.gV+=tmpGradV/num
 	model.gs+=tmpGrads/num
+	model.dU+=tmpDeltaU/num
+	model.dW+=tmpDeltaW/num
+	model.dV+=tmpDeltaV/num
+	model.ds+=tmpDeltas/num
 
 	return err

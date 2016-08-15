@@ -31,10 +31,18 @@ class RNN(object):
 		self.gW=np.zeros(self.W.shape)
 		self.gV=np.zeros(self.V.shape)
 		self.gs=np.zeros(self.s.shape)
+		self.dU=np.zeros(self.U.shape)
+		self.dW=np.zeros(self.W.shape)
+		self.dV=np.zeros(self.V.shape)
+		self.ds=np.zeros(self.s.shape)
 		self.VU=np.zeros(self.U.shape)
 		self.VW=np.zeros(self.W.shape)
 		self.VV=np.zeros(self.V.shape)
 		self.Vs=np.zeros(self.s.shape)
+		self.DU=np.ones(self.U.shape)
+		self.DW=np.ones(self.W.shape)
+		self.DV=np.ones(self.V.shape)
+		self.Ds=np.ones(self.s.shape)
 		self.buffer=0
 
 	'''
@@ -56,6 +64,18 @@ class RNN(object):
 		ret.gW=np.copy(self.gW)
 		ret.gV=np.copy(self.gV)
 		ret.gs=np.copy(self.gs)
+		ret.dU=np.copy(self.dU)
+		ret.dW=np.copy(self.dW)
+		ret.dV=np.copy(self.dV)
+		ret.ds=np.copy(self.ds)
+		ret.VU=np.copy(self.VU)
+		ret.VW=np.copy(self.VW)
+		ret.VV=np.copy(self.VV)
+		ret.Vs=np.copy(self.Vs)
+		ret.DU=np.copy(self.DU)
+		ret.DW=np.copy(self.DW)
+		ret.DV=np.copy(self.DV)
+		ret.Ds=np.copy(self.Ds)
 		ret.buffer=self.buffer
 		return ret
 
@@ -91,16 +111,20 @@ class RNN(object):
 	'''
 	def update(self,learning_rates,decay=1):
 
-		self.U=self.U-self.gU*learning_rates['U']/sqrt(decay)
-		self.W=self.W-self.gW*learning_rates['W']/sqrt(decay)
-		self.V=self.V-self.gV*learning_rates['V']/sqrt(decay)
-		self.s=self.s-self.gs*learning_rates['s']/sqrt(decay)
+		self.U=self.U-self.dU*learning_rates['U']/sqrt(decay)
+		self.W=self.W-self.dW*learning_rates['W']/sqrt(decay)
+		self.V=self.V-self.dV*learning_rates['V']/sqrt(decay)
+		self.s=self.s-self.ds*learning_rates['s']/sqrt(decay)
 
 		self.buffer=0
 		self.gU=np.zeros(self.gU.shape)
 		self.gW=np.zeros(self.gW.shape)
 		self.gV=np.zeros(self.gV.shape)
 		self.gs=np.zeros(self.gs.shape)
+		self.dU=np.zeros(self.dU.shape)
+		self.dW=np.zeros(self.dW.shape)
+		self.dV=np.zeros(self.dV.shape)
+		self.ds=np.zeros(self.ds.shape)
 
 	'''
 	>>> Return the Euclidean norm (steps) of the gradient of all parameters

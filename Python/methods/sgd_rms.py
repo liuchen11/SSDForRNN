@@ -5,13 +5,12 @@ import numpy as np
 
 import gradient
 import vectorNorm
-import sharp
 import batchProduct
 import softmax
 import RNN
 
 '''
->>> RMSprop Optimizer based on SSD
+>>> RMSprop Optimizer based on SGD
 >>> model: RNN
 >>> states: Input states. 2-D array of shape S*N where S is the sequence length and N is the input dimension
 >>> ground_truth: Labels. 2-D array of shape S*H where S is the sequence length and H is the number of labels
@@ -19,7 +18,7 @@ import RNN
 >>> damping: float. Damping coefficient in RMS algorithm
 >>> trainonly: Controling training or test model. Boolean.
 '''
-def ssd_rms(model,states,ground_truth,alpha=0.5,damping=1.0,trainonly=True):
+def sgd_rms(model,states,ground_truth,alpha=0.5,damping=1.0,trainonly=True):
 
 	if trainonly:
 
@@ -37,16 +36,16 @@ def ssd_rms(model,states,ground_truth,alpha=0.5,damping=1.0,trainonly=True):
 		dSdU=np.zeros([hidden_size,input_size,hidden_size])		#dSdU[i,j,k]=\frac{\partial s[k]}{\partial U[i,j]}
 		dSds=np.eye(hidden_size)
 
-		lambdaU=np.ones(model.U.shape)
-		lambdaW=np.ones(model.W.shape)
 		lambdaV=np.ones(model.V.shape)
+		lambdaW=np.ones(model.W.shape)
+		lambdaU=np.ones(model.U.shape)
 		lambdas=np.ones(model.s.shape)
-		VU=np.zeros(model.U.shape)
-		VW=np.zeros(model.W.shape)
 		VV=np.zeros(model.V.shape)
+		VW=np.zeros(model.W.shape)
+		VU=np.zeros(model.U.shape)
 		Vs=np.zeros(model.s.shape)
 
-        for index in xrange(num):
+		for index in xrange(num):
 			input_part=np.dot(model.U,states[index])
 			recur_part=np.dot(model.W,hidden_states)
 			new_states=gradient.sigmoid(input_part+recur_part)
@@ -73,21 +72,18 @@ def ssd_rms(model,states,ground_truth,alpha=0.5,damping=1.0,trainonly=True):
 					dSdU[i,j,i]+=states[index][j]
 
 			dSdW=batchProduct.nXone(dSdW,Lamb)
-			dSdU=batchProduct.nXone(dSdU,Lamb) 
+			dSdU=batchProduct.nXone(dSdU,Lamb)
 			dEdS=np.dot(model.V.transpose(),dis.reshape(output_size,1))
 			dEdW=batchProduct.nXone(dSdW,dEdS).squeeze()
 			dEdU=batchProduct.nXone(dSdU,dEdS).squeeze()
 
 			VW=alpha*VW+(1-alpha)*np.power(dEdW,2)
-			VU=alpha*VU+(1-alpha)*np.power(dEdW,2)
-			DW=np.sqrt(damping*lambdaW+np.sqrt(VW))
-			DU=np.sqrt(damping*lambdaU+np.sqrt(VU))
-			dEdW_sharp=np.divide(sharp.sharp(np.divide(dEdW,DW)), DW)
-			dEdU_sharp=np.divide(sharp.sharp(np.divide(dEdU,DU)), DU)
+			VU=alpha*VU+(1-alpha)*np.power(dEdU,2)
+			DW=damping*lambdaW+np.sqrt(VW)
+			DU=damping*lambdaU+np.sqrt(VU)
+			tmpGradW+=np.divide(dEdW,DW)
+			tmpGradU+=np.divide(dEdU,DU)
 
-			tmpGradW+=dEdW_sharp
-			tmpGradU+=dEdU_sharp
-			        
 			dSds=np.dot(np.dot(Lamb,model.W),dSds)
 			dEds=np.dot(dSds.transpose(),dEdS).squeeze()
 			Vs=alpha*Vs+(1-alpha)*np.power(dEds,2)
