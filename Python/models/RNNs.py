@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0,'../util/')
+sys.path.insert(0,'util/')
 
 from math import sqrt
 import cPickle
@@ -97,9 +97,10 @@ class RNNs(object):
     >>> ground_truth: Labels. 2-D array of S*H or 1*H depending on final_label where H is the dimension of the output
     >>> final_label: Boolean. If True, the sequence only have a final label otherwise each token has a corresponding label
     '''
-    def runTokens(self,states,ground_truth,final_label=False):
+    def forward(self,states,ground_truth,final_label=False):
         err=0.0
         outputs=[]
+        num=len(states)
 
         hidden_states=copy.copy(self.s)
 
@@ -112,7 +113,7 @@ class RNNs(object):
                 soft=softmax.softmax(proj)
                 logsoft=np.log(soft)
 
-                err-=np.dot(ground_truth[0],logsoft) if final_label else np.dot(ground_truth[i],logsoft)
+                err-=np.dot(ground_truth[0],logsoft) if final_label else np.dot(ground_truth[idx],logsoft)
                 outputs.append(soft)
         
         err=err if final_label else err/num

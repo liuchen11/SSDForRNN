@@ -1,11 +1,12 @@
 import sys
-sys.path.insert(0,'../util/')
-sys.path.insert(0,'../models/')
+sys.path.insert(0,'util/')
+sys.path.insert(0,'models/')
 import numpy as np
 
 import math
 import gradient
 import softmax
+import copy
 import sharp
 import vectorNorm
 import batchProduct
@@ -32,7 +33,7 @@ def sgd(model,states,ground_truth):
 	tmpDeltaV=np.zeros(model.dV.shape)
 	tmpDeltas=np.zeros(model.ds.shape)
 
-	hidden_states=model.s
+	hidden_states=copy.copy(model.s)
 	dSdW=np.zeros([hidden_size,hidden_size,hidden_size])	#dSdW[i,j,k]=\frac{\partial s[k]}{\partial W[i,j]}
 	dSdU=np.zeros([hidden_size,input_size,hidden_size])		#dSdU[i,j,k]=\frac{\partial s[k]}{\partial U[i,j]}
 	dSds=np.eye(hidden_size)
@@ -116,7 +117,7 @@ def ssd(model,states,ground_truth):
 	sqrtDU=np.sqrt(model.DU)
 	sqrtDW=np.sqrt(model.DW)
 
-	hidden_states=model.s
+	hidden_states=copy.copy(model.s)
 	dSdW=np.zeros([hidden_size,hidden_size,hidden_size])	#dSdW[i,j,k]=\frac{\partial s[k]}{\partial W[i,j]}
 	dSdU=np.zeros([hidden_size,input_size,hidden_size])		#dSdU[i,j,k]=\frac{\partial s[k]}{\partial U[i,j]}
 	dSds=np.eye(hidden_size)

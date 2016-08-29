@@ -1,6 +1,6 @@
 import sys
 from math import sqrt
-sys.path.insert(0,'../util/')
+sys.path.insert(0,'util/')
 
 import cPickle
 import gradient

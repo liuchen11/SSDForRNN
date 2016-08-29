@@ -6,16 +6,15 @@ sys.path.insert(0,'util/')
 sys.path.insert(0,'methods/')
 
 import RNN
-import sgd_const_lr
-import ssd_const_lr
-import ssd_rms
 import loader
 import time
+import grad
+import optimizer
 import numpy as np
 
 '''
 >>> Use RNN to train token labelling problem on dataset ATIS
->>> mode: string. Specify an optimizer like 'sgd_const_lr'
+>>> mode: string. Specify an optimizer like 'sgd_const'
 >>> U_lr, W_lr, V_lr, s_lr: float. The learning rate for different parameter sets
 >>> outfile: string. Set the output file we put the result in
 '''
@@ -28,8 +27,10 @@ maketest=True
 decreasingLR=True
 param={}
 param['mode']=sys.argv[1]
-param['trainXFile']='../atis/train_word1000.csv'		#Sentences in training set
-param['trainYFile']='../atis/train_label1000.csv'		#Labels in training set
+param['trainXFile']='../atis/train_word.csv'			#Sentences in training set
+param['trainYFile']='../atis/train_label.csv'			#Labels in training set
+param['testXFile']='../atis/test_word.csv'				#Sentences in test set
+param['testYFile']='../atis/test_label.csv'				#Labels in test set
 param['dictFile']='../atis/dict10.csv'					#Pretrained dict to map words to vectors
 param['vectorDim']=100									#The dimension of word vectors
 param['window']=3										#The length of the sliding windows
@@ -42,35 +43,31 @@ param['learnRates']={'U':float(sys.argv[2]),'W':float(sys.argv[3]),
 	'V':float(sys.argv[4]),'s':float(sys.argv[5])}		#Learning rate of each parameter matrices
 param['leftPad']=param['window']/2						#Padding length
 param['outputMode']=sys.argv[6]							#Append or rewrite the output file
-param['outfile']='train_' + sys.argv[7]					#Output file containing the results on training set
-param['test_outfile']='test_' + sys.argv[7]				#Output file containing the results on test set
+param['outfile']=sys.argv[7]							#Output file
 param['numberOfSave']=9									#The index of the saved file
-param['alpha']=random()									#A parameter used in RMSprop optimizer
-param['dcrorcst']='cst'									#Decreasing learning rate or const learning rate
-if decreasingLR:
-	param['dcrorcst'] = 'dcr'
+param['alpha']=0.9										#A parameter used in RMSprop optimizer
+param['damping']=1.0									#A parameter used in Adagrad or RMSprop optimizer
+param['lrDecay']=False									#Enable or disable learning rate decay through epoch
+param['useTest']=True									#Train only or train and test
 
 train_index=loader.loadData(param['trainXFile'])
 train_label=loader.loadData(param['trainYFile'])
+test_index=loader.loadData(param['testXFile'])
+test_label=load.loadData(param['testYFile'])
 dictionary=loader.loadDict(param['dictFile'])
 dictionary[-1]=np.random.randn(param['vectorDim'])*0.5
 
 rnn=RNN.RNN(param['inputs'],param['hiddens'],param['outputs'])
-
-if maketest:
-	lmbda = random()
-	shuffle(train_index, lambda: lmbda)
-	shuffle(train_label, lambda: lmbda)
-
-train_num=len(train_index)
-trainX=[]
-trainY=[]
 
 ########################################
 #                                      #
 #       Preprocessing the data         #
 #                                      #
 ########################################
+
+train_num=len(train_index)
+trainX=[]
+trainY=[]
 
 for i in xrange(train_num):
 	sentence_len=len(train_index[i])
@@ -95,18 +92,32 @@ for i in xrange(train_num):
 	trainX.append(single_input)
 	trainY.append(single_label)
 
-if maketest:
-	ttX=trainX
-	ttY=trainY
-	trainX=ttX[0:900]
-	trainY=ttY[0:900]
-	testX=ttX[900:1000]
-	testY=ttY[900:1000]
+test_num=len(test_index)
+testX=[]
+testY=[]
 
-	train_num=900
-	test_num=100
-	test_results='''mode=%s,U_lr=%.4f,W_lr=%.4f,V_lr=%.4f,s_lr=%.4f\n'''%(param['mode'],param['learnRates']['U'],
-		param['learnRates']['W'],param['learnRates']['V'],param['learnRates']['s'])
+for i in xrange(test_num):
+	sentence_len=len(test_index[i])
+	single_input=np.zeros([sentence_len,param['inputs']])
+	single_label=np.zeros([sentence_len,param['outputs']])
+
+	for p in xrange(sentence_len+param['window']-1):
+		toFill=dictionary[-1]
+		if p>=param['leftPad'] and p<sentence_len+param['leftPad']:
+			word=test_index[i][p-param['leftPad']]
+			if dictionary.has_key(word)==False:
+				dictionary[word]=np.random.randn(param['vectorDim'])*0.05
+			toFill=dictionary[word]
+		startline=max(0,p-param['window']+1)
+		endline=min(sentence_len-1,p)
+		for line in range(startline,endline+1):
+			col=p-line
+			single_input[line,col*param['vectorDim']:(col+1)*param['vectorDim']]=toFill
+
+	for w in xrange(sentence_len):
+		single_label[w,test_label[i][w]]=1
+	testX.append(single_input)
+	testY.append(single_label)
 
 results='''mode=%s,U_lr=%.4f,W_lr=%.4f,V_lr=%.4f,s_lr=%.4f\n'''%(param['mode'],param['learnRates']['U'],
 	param['learnRates']['W'],param['learnRates']['V'],param['learnRates']['s'])
@@ -118,13 +129,13 @@ print results,
 #                    #
 ######################
 
-if param['mode']=='sgd_const_lr':
+if param['mode']=='sgd_const':
 	begin=time.time()
 	lr_decay=1
 	for epoch in xrange(param['nEpoch']):
-		if decreasingLR:
+		if param['lrDecay']:
 			lr_decay=epoch+1
-		if maketest:
+		if param[useTest]:
 			test_err_total=0.0
 			for index in xrange(test_num):
 				if len(train_index[index+900])>0:

@@ -1,6 +1,6 @@
 import sys
-sys.path.insert(0,'../util/')
-sys.path.insert(0,'../models/')
+sys.path.insert(0,'util/')
+sys.path.insert(0,'models/')
 import numpy as np
 import copy
 

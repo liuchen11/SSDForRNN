@@ -1,7 +1,7 @@
 import sys
-sys.path.insert(0,'../util/')
-sys.path.insert(0,'../models/')
-sys.path.insert(0,'../methods/')
+sys.path.insert(0,'util/')
+sys.path.insert(0,'models/')
+sys.path.insert(0,'methods/')
 import cPickle
 import time
 import numpy as np

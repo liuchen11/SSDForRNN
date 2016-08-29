@@ -1,7 +1,7 @@
 import sys
-sys.path.insert(0,'../util/')
-sys.path.insert(0,'../models/')
-sys.path.insert(0,'../methods/')
+sys.path.insert(0,'util/')
+sys.path.insert(0,'models/')
+sys.path.insert(0,'methods/')
 
 import RNN
 import sgd_const_lr
@@ -31,7 +31,7 @@ for i in xrange(S):
 	spot=random.randint(0,K-1)
  	ground_truth[i,spot]=1
 
-data=cPickle.load(open('../data/50x10in10out'))
+data=cPickle.load(open('data/50x10in10out'))
 states=data['states']
 ground_truth=data['ground_truth']
 sgd_errs=[]
