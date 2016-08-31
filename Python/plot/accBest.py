@@ -75,7 +75,7 @@ if order==1:
 				bssdm.append(((bssds[i])[j])[1])
 
 	bsgd=f7(bsgdm)
-	bssd=f7(bssdm)                        
+	bssd=f7(bssdm)
 
 
 elif order==2:
@@ -95,7 +95,7 @@ if len(sys.argv)>2:
 	nbr=int(sys.argv[2])
 else:
 	nbr=5
-        
+	
 print "\n\n\n\n", bsgd[0:nbr]  
 print bssd[0:nbr]
 print "\n\n\n"

@@ -2,13 +2,38 @@ from multiprocessing import Pool
 import os
 import sys
 
+'''
+>>> Launch several trainings with different parameters in parallel
+>>> 1st argument : number of processus to start
+>>> 2nd, 3rd, 4th, ... argument = integer that defines a set of parameters to use
+'''
+
+
+
+
+'''
+>>> Start a training with random parameters
+'''
 def tunem():
 	os.system('python tuneLR.py all 0.005 0.01 1')
 
+
+'''
+>>> Start a training with chosen parameters
+>>> n: integer which defines one set of parameters
+'''
 def tunec(n):
 	param = getparam(n)
 	os.system('python tuneLRparam.py %s %f %f %f %f 1'%(param['mode'], param['U'], param['W'], param['V'], param['s']))
 
+
+
+
+
+'''
+>>> Return a set of chosen parameters
+>>> n: integer which defines the set of parameters
+'''
 def getparam(n):
 	allmode = []
 	for i in xrange(10):
@@ -44,14 +69,28 @@ def getparam(n):
 	param['s'] = allparam[n][3]
 	return param
 
-witchparams = [14]
+
+
+
+if len(sys.argv)<2:
+	Nprocess = 1
+else:
+	Nprocess = int(sys.argv[1])
+if Nprocess < 1:
+	Nprocess = 1
+
+whichparams = []
+if Nprocess < len(sys.argv)-1:
+	for i in sys.argv[2:Nprocess+1]:
+		whichparams.append(int(i))
+
+
 
 pool = Pool()
 
-Nprocess = 1
 if Nprocess==1:
-	if len(sys.argv)>=2:
-		tunec(witchparams[0])
+	if len(whichparams)>=1:
+		tunec(whichparams[0])
 	else:
 		tunem()
 else:
@@ -59,15 +98,13 @@ else:
 	answer = []
 	for i in xrange(Nprocess):
 		result.append(0);
-	 	answer.append(0);
-	if len(sys.argv)>=2:
+		answer.append(0);
+	if len(whichparams)>=1:
 		for i in xrange(Nprocess):
 			result[i] = pool.apply_async(tunec, args=(witchparams[i],))
 	else:
 		for i in xrange(Nprocess):
-			result[i] = pool.apply_async(tunem)    # evaluate "solve1(A)" asynchronously
+			result[i] = pool.apply_async(tunem)
 
 	for i in xrange(Nprocess):
 		answer[i] = result[i].get(timeout=1000000)
-
-

@@ -7,14 +7,14 @@ import numpy as np
 
 '''
 >>> Try a specific learning rate setting for serveral times
->>> mode: can be 'all' or a specified optimzer like 'sgd_const_lr'
+>>> mode: can be 'all' or a specified optimzer like 'sgd_const_lr' etc, or the following groups of optimizers : 'ssd', sgd', 'const_lr', 'rms', 'adagrad'
 >>> U_lr, W_lr, V_lr, s_lr: float. Specified learning rate for different matrices
 >>> points: integer. Specify how many times we try for this learning rate setting
 >>> outfile: string, optional. This parameter set the output file and writing mode(append or rewrite). The default is "a" and "log"
 '''
 
 if len(sys.argv)<7:
-	print 'Usage: python tuneLR.py <mode> <U_lr> <W_lr> <V_lr> <s_lr> <points> (<a/w> <outfile>)'
+	print 'Usage: python tuneLRparam.py <mode> <U_lr> <W_lr> <V_lr> <s_lr> <points> (<a/w> <outfile>)'
 	exit(0)
 
 mode=sys.argv[1]
@@ -41,17 +41,32 @@ if os.path.exists('../results')==False:
 outfile='../results/'+outfile
 lr=[p1,p2,p3,p4]
 
-if mode=='all' or mode=='sgd_const_lr':
+if mode=='all' or mode=='sgd_const_lr' or mode=='sgd' or mode=='const_lr':
 	for i in xrange(points):
-		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'%(
-			'sgd_const_lr',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
+		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
+		          %('sgd_const_lr',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
 
-if mode=='all' or mode=='ssd_const_lr':
+if mode=='all' or mode=='ssd_const_lr' or mode=='ssd' or mode=='const_lr':
 	for i in xrange(points):
-		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'%(
-			'ssd_const_lr',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
+		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
+		          %('ssd_const_lr',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
 
-if mode=='all' or mode=='ssd_rms':
+if mode=='all' or mode=='sgd_rms' or mode=='sgd' or mode=='rms':
 	for i in xrange(points):
-		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'%(
-			'ssd_rms',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
+		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
+		          %('sgd_rms',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
+
+if mode=='all' or mode=='ssd_rms' or mode=='ssd' or mode=='rms':
+	for i in xrange(points):
+		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
+		          %('ssd_rms',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
+
+if mode=='all' or mode=='sgd_adagrad' or mode=='sgd' or mode=='adagrad':
+	for i in xrange(points):
+		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
+		          %('sgd_adagrad',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
+
+if mode=='all' or mode=='ssd_adagrad' or mode=='ssd' or mode=='adagrad':
+	for i in xrange(points):
+		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
+		          %('ssd_adagrad',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))

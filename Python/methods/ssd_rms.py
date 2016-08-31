@@ -47,6 +47,7 @@ def ssd_rms(model,states,ground_truth,alpha=0.5,damping=1.0,trainonly=True):
 		Vs=np.zeros(model.s.shape)
 
         for index in xrange(num):
+
 			input_part=np.dot(model.U,states[index])
 			recur_part=np.dot(model.W,hidden_states)
 			new_states=gradient.sigmoid(input_part+recur_part)
@@ -71,7 +72,6 @@ def ssd_rms(model,states,ground_truth,alpha=0.5,damping=1.0,trainonly=True):
 					dSdW[i,j,i]+=hidden_states[j]
 				for j in xrange(input_size):
 					dSdU[i,j,i]+=states[index][j]
-
 			dSdW=batchProduct.nXone(dSdW,Lamb)
 			dSdU=batchProduct.nXone(dSdU,Lamb) 
 			dEdS=np.dot(model.V.transpose(),dis.reshape(output_size,1))
@@ -111,7 +111,6 @@ def ssd_rms(model,states,ground_truth,alpha=0.5,damping=1.0,trainonly=True):
 		test_err=0.0
 		    
 		test_hidden_states=model.s
-
 		for index in xrange(test_num):
 			test_input_part=np.dot(model.U,states[index])
 			test_recur_part=np.dot(model.W,test_hidden_states)
@@ -120,7 +119,7 @@ def ssd_rms(model,states,ground_truth,alpha=0.5,damping=1.0,trainonly=True):
 			test_soft=softmax.softmax(test_proj)
 			test_logsoft=np.log(test_soft)
 			test_err-=np.dot(ground_truth[index],test_logsoft)
-
+			
 		err=test_err/test_num
-
+		
 	return err
