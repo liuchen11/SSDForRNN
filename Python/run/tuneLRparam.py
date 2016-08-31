@@ -14,8 +14,8 @@ import numpy as np
 '''
 
 if len(sys.argv)<7:
-	print 'Usage: python tuneLRparam.py <mode> <U_lr> <W_lr> <V_lr> <s_lr> <points> (<a/w> <outfile>)'
-	exit(0)
+    print 'Usage: python tuneLRparam.py <mode> <U_lr> <W_lr> <V_lr> <s_lr> <points> (<a/w> <outfile>)'
+    exit(0)
 
 mode=sys.argv[1]
 p1=float(sys.argv[2])
@@ -26,47 +26,47 @@ points=int(sys.argv[6])
 
 outfile='log'
 if len(sys.argv)>=9:
-	if sys.argv[8][-1]=='/':
-		print 'Invalid output dictionary: %s'%sys.argv[8]
-		exit(0)
-	outfile=sys.argv[8]
-	while outfile.count('/')>0:
-		outfile=outfile[outfile.index('/')+1:]
+    if sys.argv[8][-1]=='/':
+        print 'Invalid output dictionary: %s'%sys.argv[8]
+        exit(0)
+    outfile=sys.argv[8]
+    while outfile.count('/')>0:
+        outfile=outfile[outfile.index('/')+1:]
 
 print 'Output File Path=results/%s'%outfile
 file_mode=sys.argv[7] if len(sys.argv)>=8 else 'a'
 
 if os.path.exists('../results')==False:
-	os.system('mkdir ../results')
+    os.system('mkdir ../results')
 outfile='../results/'+outfile
 lr=[p1,p2,p3,p4]
 
 if mode=='all' or mode=='sgd_const_lr' or mode=='sgd' or mode=='const_lr':
-	for i in xrange(points):
-		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
-		          %('sgd_const_lr',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
+    for i in xrange(points):
+        os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
+                  %('sgd_const_lr',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
 
 if mode=='all' or mode=='ssd_const_lr' or mode=='ssd' or mode=='const_lr':
-	for i in xrange(points):
-		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
-		          %('ssd_const_lr',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
+    for i in xrange(points):
+        os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
+                  %('ssd_const_lr',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
 
 if mode=='all' or mode=='sgd_rms' or mode=='sgd' or mode=='rms':
-	for i in xrange(points):
-		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
-		          %('sgd_rms',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
+    for i in xrange(points):
+        os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
+                  %('sgd_rms',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
 
 if mode=='all' or mode=='ssd_rms' or mode=='ssd' or mode=='rms':
-	for i in xrange(points):
-		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
-		          %('ssd_rms',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
+    for i in xrange(points):
+        os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
+                  %('ssd_rms',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
 
 if mode=='all' or mode=='sgd_adagrad' or mode=='sgd' or mode=='adagrad':
-	for i in xrange(points):
-		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
-		          %('sgd_adagrad',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
+    for i in xrange(points):
+        os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
+                  %('sgd_adagrad',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
 
 if mode=='all' or mode=='ssd_adagrad' or mode=='ssd' or mode=='adagrad':
-	for i in xrange(points):
-		os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
-		          %('ssd_adagrad',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))
+    for i in xrange(points):
+        os.system('python ../tasks/atisLabel.py %s %f %f %f %f %s %s'
+                  %('ssd_adagrad',lr[0],lr[1],lr[2],lr[3],file_mode,outfile))

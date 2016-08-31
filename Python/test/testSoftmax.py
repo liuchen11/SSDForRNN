@@ -9,5 +9,5 @@ vectors=np.random.random([100,100])
 
 print softmax.softmax(vector1)
 for i in xrange(100):
-	vector=softmax.softmax(vectors[i])
-	assert(np.sum(vector)>0.999 and np.sum(vector)<1.001)
+    vector=softmax.softmax(vectors[i])
+    assert(np.sum(vector)>0.999 and np.sum(vector)<1.001)

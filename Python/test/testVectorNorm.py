@@ -9,6 +9,6 @@ vectors=np.random.random([10000,10000])
 results=np.zeros(len(vectors))
 begin=time.time()
 for i in xrange(len(vectors)):
-	results[i]=vectorNorm.norm(vectors[i],np.inf)
+    results[i]=vectorNorm.norm(vectors[i],np.inf)
 end=time.time()
 print 'Completed in %.2f seconds'%(end-begin)

@@ -28,8 +28,8 @@ states=np.random.randn(S,N)
 ground_truth=np.zeros([S,K])
 
 for i in xrange(S):
-	spot=random.randint(0,K-1)
- 	ground_truth[i,spot]=1
+    spot=random.randint(0,K-1)
+    ground_truth[i,spot]=1
 
 data=cPickle.load(open('data/50x10in10out'))
 states=data['states']
@@ -40,24 +40,24 @@ ssd_errs=[]
 
 duration1=0.0
 for i in xrange(nEpoch):
-	begin=time.time()
-	err1=sgd_const_lr.sgd(rnn1,states,ground_truth)
-	end=time.time()
-	rnn1.update(sgd_lr)
-	duration1+=end-begin
-	print i,'\t',err1
-	sgd_errs.append(err1)
+    begin=time.time()
+    err1=sgd_const_lr.sgd(rnn1,states,ground_truth)
+    end=time.time()
+    rnn1.update(sgd_lr)
+    duration1+=end-begin
+    print i,'\t',err1
+    sgd_errs.append(err1)
 print 'time:','\t',duration1
 
 duration2=0.0
 for i in xrange(nEpoch):
-	begin=time.time()
-	err2=ssd_const_lr.ssd(rnn2,states,ground_truth)
-	end=time.time()
-	rnn2.update(ssd_lr)
-	duration2+=end-begin
-	print i,'\t',err2
-	ssd_errs.append(err2)
+    begin=time.time()
+    err2=ssd_const_lr.ssd(rnn2,states,ground_truth)
+    end=time.time()
+    rnn2.update(ssd_lr)
+    duration2+=end-begin
+    print i,'\t',err2
+    ssd_errs.append(err2)
 print 'time:','\t',duration2
 
 plt.plot(range(nEpoch),sgd_errs,'b',range(nEpoch),ssd_errs,'r')

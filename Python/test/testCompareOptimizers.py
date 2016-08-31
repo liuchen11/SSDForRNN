@@ -44,77 +44,76 @@ ssd_adagrad_sparse=[]
 sgd_rms_sparse=[]
 ssd_rms_sparse=[]
 
-
 sgd_const_time=0.0
 for i in xrange(nEpoch):
-	begin=time.time()
-	err=grad.sgd(rnn1,states,ground_truth)
-	optimizer.const(rnn1,sgd_lr)
-	end=time.time()
-	sgd_const_time+=end-begin
-	print i,'\t',err
-	sgd_const_err.append(err)
-	sgd_const_sparse.append(sparsity.sparsity(rnn1.U))
+    begin=time.time()
+    err=grad.sgd(rnn1,states,ground_truth)
+    optimizer.const(rnn1,sgd_lr)
+    end=time.time()
+    sgd_const_time+=end-begin
+    print i,'\t',err
+    sgd_const_err.append(err)
+    sgd_const_sparse.append(sparsity.sparsity(rnn1.U))
 print 'time:','\t',sgd_const_time
 
 ssd_const_time=0.0
 for i in xrange(nEpoch):
-	begin=time.time()
-	err=grad.ssd(rnn2,states,ground_truth)
-	optimizer.const(rnn2,ssd_lr)
-	end=time.time()
-	ssd_const_time+=end-begin
-	print i,'\t',err
-	ssd_const_err.append(err)
-	ssd_const_sparse.append(sparsity.sparsity(rnn2.U))
+    begin=time.time()
+    err=grad.ssd(rnn2,states,ground_truth)
+    optimizer.const(rnn2,ssd_lr)
+    end=time.time()
+    ssd_const_time+=end-begin
+    print i,'\t',err
+    ssd_const_err.append(err)
+    ssd_const_sparse.append(sparsity.sparsity(rnn2.U))
 print 'time:','\t',ssd_const_time
 
 # sgd_adagrad_time=0.0
 # for i in xrange(nEpoch):
-# 	begin=time.time()
-# 	err=grad.sgd(rnn3,states,ground_truth)
-# 	optimizer.adagrad(rnn3,sgd_lr)
-# 	end=time.time()
-# 	sgd_adagrad_time+=end-begin
-# 	print i,'\t',err
-# 	sgd_adagrad_err.append(err)
-# 	sgd_adagrad_sparse.append(sparsity.sparsity(rnn3.U))
+#   begin=time.time()
+#   err=grad.sgd(rnn3,states,ground_truth)
+#   optimizer.adagrad(rnn3,sgd_lr)
+#   end=time.time()
+#   sgd_adagrad_time+=end-begin
+#   print i,'\t',err
+#   sgd_adagrad_err.append(err)
+#   sgd_adagrad_sparse.append(sparsity.sparsity(rnn3.U))
 # print 'time:','\t',sgd_adagrad_time
 
 # ssd_adagrad_time=0.0
 # for i in xrange(nEpoch):
-# 	begin=time.time()
-# 	err=grad.ssd(rnn4,states,ground_truth)
-# 	optimizer.adagrad(rnn4,ssd_lr)
-# 	end=time.time()
-# 	ssd_adagrad_time+=end-begin
-# 	print i,'\t',err
-# 	ssd_adagrad_err.append(err)
-# 	ssd_adagrad_sparse.append(sparsity.sparsity(rnn4.U))
+#   begin=time.time()
+#   err=grad.ssd(rnn4,states,ground_truth)
+#   optimizer.adagrad(rnn4,ssd_lr)
+#   end=time.time()
+#   ssd_adagrad_time+=end-begin
+#   print i,'\t',err
+#   ssd_adagrad_err.append(err)
+#   ssd_adagrad_sparse.append(sparsity.sparsity(rnn4.U))
 # print 'time:','\t',ssd_adagrad_time
 
 # sgd_rms_time=0.0
 # for i in xrange(nEpoch):
-# 	begin=time.time()
-# 	err=grad.sgd(rnn5,states,ground_truth)
-# 	optimizer.rms(rnn5,sgd_lr)
-# 	end=time.time()
-# 	sgd_rms_time+=end-begin
-# 	print i,'\t',err
-# 	sgd_rms_err.append(err)
-# 	sgd_rms_sparse.append(sparsity.sparsity(rnn5.U))
+#   begin=time.time()
+#   err=grad.sgd(rnn5,states,ground_truth)
+#   optimizer.rms(rnn5,sgd_lr)
+#   end=time.time()
+#   sgd_rms_time+=end-begin
+#   print i,'\t',err
+#   sgd_rms_err.append(err)
+#   sgd_rms_sparse.append(sparsity.sparsity(rnn5.U))
 # print 'time:','\t',sgd_rms_time
 
 # ssd_rms_time=0.0
 # for i in xrange(nEpoch):
-# 	begin=time.time()
-# 	err=grad.ssd(rnn6,states,ground_truth)
-# 	optimizer.rms(rnn6,ssd_lr)
-# 	end=time.time()
-# 	ssd_rms_time+=end-begin
-# 	print i,'\t',err
-# 	ssd_rms_err.append(err)
-# 	ssd_rms_sparse.append(sparsity.sparsity(rnn6.U))
+#   begin=time.time()
+#   err=grad.ssd(rnn6,states,ground_truth)
+#   optimizer.rms(rnn6,ssd_lr)
+#   end=time.time()
+#   ssd_rms_time+=end-begin
+#   print i,'\t',err
+#   ssd_rms_err.append(err)
+#   ssd_rms_sparse.append(sparsity.sparsity(rnn6.U))
 # print 'time:','\t',ssd_rms_time
 
 fig=plt.figure()

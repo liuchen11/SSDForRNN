@@ -5,4 +5,4 @@ import numpy as np
 >>> The infinity-norm over the 2-norm
 '''
 def sparsity(array):
-	return np.max(array)/np.linalg.norm(array)
+    return np.max(array)/np.linalg.norm(array)
