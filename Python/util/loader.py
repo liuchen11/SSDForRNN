@@ -19,7 +19,7 @@ def loadDict(file_name):
 def loadCudaFile(file_name):
     return ''.join(open(file_name,'r').readlines())
 
-def loadCudaFunc(file_name,func_list=None):
+def loadCudaFunc(file_name,func_list=None,global_mask=None):
     lines=open(file_name,'r').readlines()
     functions=[]
     for idx,line in enumerate(lines):
@@ -32,13 +32,24 @@ def loadCudaFunc(file_name,func_list=None):
         endline=functions[idx+1][0] if idx!=len(functions)-1 else len(lines)
         func_name=item[1]
         function_dict[func_name]=''.join(lines[startline:endline])
+    header=''.join(lines[:functions[0][0]])
     if func_list==None:
+        function_dict['__header__']=header
         return function_dict
-    else:
+    elif global_mask==None:
         ret_str=''
         for func in func_list:
             try:
                 ret_str+=function_dict[func]
             except:
                 print 'No function called %s in file %s'%(func,file_name)
-        return ret_str
+        return header+ret_str
+    else:
+        ret_str=''
+        assert(len(func_list)==len(global_mask))
+        for func,mask in zip(func_list,global_mask):
+            try:
+                ret_str+=function_dict[func].replace('__global__','') if mask==False else function_dict[func]
+            except:
+                print 'No function called %s in file %s'%(func,file_name)
+        return header+ret_str
