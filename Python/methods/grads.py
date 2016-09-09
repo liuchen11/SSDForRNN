@@ -133,6 +133,7 @@ def ssd(model,states,ground_truth,optimizer,final_label=False):
     hidden_states=copy.copy(model.s)            #hidden states, should be deep copy
     lamb=copy.copy(model.s)                     #lambda, size shape of hidden states
     err=0.0
+    exception_num=0
 
     # gradient used by iteration
     dSdU=[[] for i in xrange(hidden_layers)]    #dSdU[n1,n2]=dS[n1]/dU[n2], n1>=n2
@@ -213,22 +214,26 @@ def ssd(model,states,ground_truth,optimizer,final_label=False):
                 dEdsi=np.dot(dSds[-1][n].T,dEdS).squeeze()
 
                 model.gU[n]+=dEdUi*weight
-                if optimizer.name!='const':
-                    sqrtDUi=np.sqrt(optimizer.DU[n])
-                    model.dU[n]+=np.div(sharp.sharp(np.div(dEdUi,sqrtDUi)),sqrtDUi)*weight
-                else:
-                    model.dU[n]+=sharp.sharp(dEdUi)*weight
                 model.gW[n]+=dEdWi*weight
-                if optimizer.name!='const':
-                    sqrtDWi=np.sqrt(optimizer.DW[n])
-                    model.dW[n]+=np.div(sharp.sharp(np.div(dEdWi,sqrtDWi)),sqrtDWi)*weight
-                else:
-                    model.dW[n]+=sharp.sharp(dEdWi)*weight
                 model.gs[n]+=dEdsi*weight
                 if optimizer.name!='const':
+                    sqrtDUi=np.sqrt(optimizer.DU[n])
+                    try:
+                        model.dU[n]+=np.div(sharp.sharp(np.div(dEdUi,sqrtDUi)),sqrtDUi)*weight
+                    except:
+                        exception_num+=1
+                        model.dU[n]+=np.div(dEdUi,optimizer.DU[n])*weight
+                    sqrtDWi=np.sqrt(optimizer.DW[n])
+                    try:
+                        model.dW[n]+=np.div(sharp.sharp(np.div(dEdWi,sqrtDWi)),sqrtDWi)*weight
+                    except:
+                        exception_num+=1
+                        model.dW[n]+=np.div(dEdWi,optimizer.DW[n])*weight
                     model.ds[n]+=np.div(dEdsi,optimizer.Ds[n])*weight
                 else:
+                    model.dU[n]+=sharp.sharp(dEdUi)*weight
+                    model.dW[n]+=sharp.sharp(dEdWi)*weight
                     model.ds[n]+=dEdsi*weight
 
     model.buffer+=1
-    return err
+    return exception_num, err

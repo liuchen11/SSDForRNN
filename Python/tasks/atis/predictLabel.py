@@ -143,13 +143,15 @@ try:
             lr_decay=epoch if param['learnRateDecay'] else 1
             train_err=0.0
             for index in xrange(train_num):
-                err=grads.ssd(rnn,trainX[index],trainY[index],optimizer)
+                exception_num, err=grads.ssd(rnn,trainX[index],trainY[index],optimizer)
                 train_err+=err
                 if index%param['batchSize']==0:
                     optimizer.update(rnn,learnRate,decay=lr_decay)
             optimizer.update(rnn,learnRate,decay=lr_decay)
             train_err_list.append(train_err)
             print 'train err on Epoch %d: %f'%(epoch,train_err)
+            if exception_num!=0:
+                print 'throw %d exceptions in total while applying sharp operator!'%exception_num
             if param['trainOnly']==False:
                 test_err=0.0
                 for index in xrange(test_num):

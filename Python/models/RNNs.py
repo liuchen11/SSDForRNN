@@ -152,13 +152,56 @@ class RNNs(object):
         self.buffer=0
 
     '''
+    >>> print the gradient information
+    >>> out_file: file in mode 'w'
+    >>> notes: dict, extra information need to be mentioned
+    '''
+    def print_gradient(self,out_file,notes={}):
+        out_file.write('===========================================\n')
+        for item in notes:
+            out_file.write(str(item)+':'+str(notes[item])+'\n')
+        if self.buffer==0:
+            out_file.write('This is no gradient information yet\n')
+            return    
+        out_file.write('This is a recurrent neural network of %d hidden layer(s)\n'%self.hidden_layers)
+        for idx in xrange(self.hidden_layers):
+            out_file.write('Average abs value of matrix dU in layer %d: %.5f\n'%(idx+1, np.mean(np.abs(self.dU[idx]))/self.buffer))
+            out_file.write('Average abs value of matrix dW in layer %d: %.5f\n'%(idx+1, np.mean(np.abs(self.dW[idx]))/self.buffer))
+            out_file.write('Average abs value of matrix ds in layer %d: %.5f\n'%(idx+1, np.mean(np.abs(self.ds[idx]))/self.buffer))
+        out_file.write('Average abs value of matrix dV: %.5f\n'%(np.mean(np.abs(self.dV))/self.buffer))
+        out_file.flush()
+            
+    '''
     >>> save the model
     >>> out_file: str, name of saved file
-    >>> testOnly: if True, only parameters are saved; otherwise, all information will be saved.
+    >>> testOnly: if True, only parameters are saved; otherwise, all information will be saved
     '''
     def save(self,out_file,testOnly=True):
         if testOnly:
-            cPickle.dump({'size':self.size,'U':self.U,'W':self.W,'V':self.V},
+            cPickle.dump({'size':self.size,'U':self.U,'W':self.W,'V':self.V,'s':self.s},
                 open(out_file,'wb'))
         else:
-            cPickle.dump(self,open(out_file,'wb'))
+            cPickle.dump({'size':self.size,'U':self.U,'W':self.W,'V':self.V,'s':self.s,
+                'gU':self.gU,'gW':self.gW,'gV':self.gV,'gs':self.gs,
+                'dU':self.dU,'dW':self.dW,'dV':self.dV,'ds':self.ds},open(out_file,'wb'))
+        print 'parameters saved in file: %s'%out_file
+
+    '''
+    >>> load the parameters
+    >>> in_file: str, name of the file to load
+    >>> testOnly: if True, only load connections; otherwise, load all information
+    '''
+    def load(self,in_file,testOnly=True):
+        info=cPickle.load(open(in_file,'rb'))
+        if info['size']!=self.size:
+            print 'the model\' size is different from the loaded file!'
+            print 'the size of the model: ',self.size
+            print 'the size information in config file: ',info['size']
+            return
+        self.U=info['U'];self.W=info['W'];self.V=info['V'];self.s=info['s']
+        if testOnly==False:
+            self.gU=info['gU'];self.gW=info['gW'];self.gV=info['gV'];self.gs=info['gs']
+            self.dU=info['dU'];self.dW=info['dW'];self.dV=info['dV'];self.ds=info['ds']
+        print 'parameters loaded from file: %s'%in_file
+        
+        
