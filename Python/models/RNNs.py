@@ -20,8 +20,9 @@ class RNNs(object):
     >>> self.dU, self.dW, self.gV: the direction of parameters' update
     >>> self.buffer: the number of processed instances within a batch
     '''
-    def __init__(self,neurons):
+    def __init__(self,neurons,nonlinearity):
         self.layers=len(neurons)
+        self.nonlinearity=nonlinearity
         self.hidden_layers=self.layers-2
         self.input_size=neurons[0]
         self.hidden_size=neurons[1:-1]
@@ -63,6 +64,18 @@ class RNNs(object):
         self.gV=np.zeros(self.V.shape)
         self.dV=np.zeros(self.V.shape)
 
+        self.activation=[]
+        self.dactivation=[]
+        for func in nonlinearity:
+            if func.lower() in ['relu',]:
+                self.activation.append(gradient.relu)
+                self.dactivation.append(gradient.drelu)
+            elif func.lower() in ['sigmoid','sigd','sigmd']:
+                self.activation.append(gradient.sigmoid)
+                self.dactivation.append(gradient.dsigmoid)
+            else:
+                raise Exception('unrecognized function name %s'%func)
+
         self.params=self.U+self.W+self.s+[self.V,]
         self.buffer=0
 
@@ -70,7 +83,7 @@ class RNNs(object):
     >>> make a deep copy of current network, including the size and the parameters
     '''
     def copy(self):
-        ret=RNNs(self.size)
+        ret=RNNs(self.size,self.nonlinearity)
 
         for i in xrange(self.hidden_layers):
             ret.U[i]=np.copy(self.U[i])
@@ -105,9 +118,9 @@ class RNNs(object):
         hidden_states=copy.copy(self.s)
 
         for idx,token in enumerate(states):
-            hidden_states[0]=gradient.sigmoid(np.dot(self.U[0],token)+np.dot(self.W[0],hidden_states[0]))
+            hidden_states[0]=self.activation[0](np.dot(self.U[0],token)+np.dot(self.W[0],hidden_states[0]))
             for i in xrange(1,self.hidden_layers):
-                hidden_states[i]=gradient.sigmoid(np.dot(self.U[i],hidden_states[i-1])+np.dot(self.W[i],hidden_states[i]))
+                hidden_states[i]=self.activation[0](np.dot(self.U[i],hidden_states[i-1])+np.dot(self.W[i],hidden_states[i]))
             if idx==len(states)-1 or not final_label:
                 proj=np.dot(self.V,hidden_states[-1])
                 soft=softmax.softmax(proj)
@@ -165,10 +178,10 @@ class RNNs(object):
             return    
         out_file.write('This is a recurrent neural network of %d hidden layer(s)\n'%self.hidden_layers)
         for idx in xrange(self.hidden_layers):
-            out_file.write('Average abs value of matrix dU in layer %d: %.5f\n'%(idx+1, np.mean(np.abs(self.dU[idx]))/self.buffer))
-            out_file.write('Average abs value of matrix dW in layer %d: %.5f\n'%(idx+1, np.mean(np.abs(self.dW[idx]))/self.buffer))
-            out_file.write('Average abs value of matrix ds in layer %d: %.5f\n'%(idx+1, np.mean(np.abs(self.ds[idx]))/self.buffer))
-        out_file.write('Average abs value of matrix dV: %.5f\n'%(np.mean(np.abs(self.dV))/self.buffer))
+            out_file.write('Average abs value of matrix gU in layer %d: %.5f\n'%(idx+1, np.mean(np.abs(self.gU[idx]))/self.buffer))
+            out_file.write('Average abs value of matrix gW in layer %d: %.5f\n'%(idx+1, np.mean(np.abs(self.gW[idx]))/self.buffer))
+            out_file.write('Average abs value of matrix gs in layer %d: %.5f\n'%(idx+1, np.mean(np.abs(self.gs[idx]))/self.buffer))
+        out_file.write('Average abs value of matrix gV: %.5f\n'%(np.mean(np.abs(self.gV))/self.buffer))
         out_file.flush()
             
     '''

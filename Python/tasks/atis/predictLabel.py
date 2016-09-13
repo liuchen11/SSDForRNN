@@ -13,6 +13,17 @@ import xmlParser
 import traceback
 import numpy as np
 
+def create_dir(path):
+    parts=path.split(os.sep)
+    pos=''
+    for part in parts:
+        pos+=part+os.sep
+        if not os.path.exists(pos):
+            try:
+                os.mkdir(pos)
+            except:
+                print 'Failed to Create Folder %s'%pos
+
 '''
 >>> Use RNN to train token labelling problem on dataset ATIS
 '''
@@ -28,6 +39,10 @@ left_pad=param['window']/2
 
 dictionary=loader.loadDict(param['dictFile'])
 dictionary[-1]=np.random.randn(param['vectorDim'])*0.5
+if param.has_key('modelSavedFolder'):
+    create_dir(param['modelSavedFolder'])
+if param.has_key('gradientSavedFile'):
+    create_dir(os.path.dirname(param['gradientSavedFile']))
 
 train_index=loader.loadData(param['trainXFile'])
 train_label=loader.loadData(param['trainYFile'])
@@ -35,7 +50,7 @@ if param['trainOnly']==False:
     test_index=loader.loadData(param['testXFile'])
     test_label=loader.loadData(param['testYFile'])
 
-rnn=RNNs.RNNs(neurons)
+rnn=RNNs.RNNs(neurons=neurons,nonlinearity=param['nonlinearity'])
 results='''mode=%s,U_lr=%s,W_lr=%s,V_lr=%s,s_lr=%s,config file=%s\n'''%(param['mode'],
     param['learnRateU'],param['learnRateW'],param['learnRateV'],param['learnRates'],sys.argv[1])
 print results,
@@ -111,9 +126,17 @@ try:
                 err=grads.sgd(rnn,trainX[index],trainY[index],optimizer)
                 train_err+=err
                 if index%param['batchSize']==0:
+                    if param.has_key('gradientSavedFile'):
+                        fopen=sys.stdout if param['gradientSavedFile']=='' else open(param['gradientSavedFile'], 'a')
+                        rnn.print_gradient(fopen,notes={'epoch':epoch,'index':index})
                     optimizer.update(rnn,learnRate,decay=lr_decay)
+            if param.has_key('gradientSavedFile'):
+                fopen=sys.stdout if param['gradientSavedFile']=='' else open(param['gradientSavedFile'],'a')
+                rnn.print_gradient(fopen,notes={'epoch':epoch,'index':index})
             optimizer.update(rnn,learnRate,decay=lr_decay)
             train_err_list.append(train_err)
+            if param.has_key('modelSavedFolder'):
+                rnn.save(param['modelSavedFolder']+os.sep+'sgd-epoch%d.pkl'%epoch)
             print 'train err on Epoch %d: %f'%(epoch,train_err)
             if param['trainOnly']==False:
                 test_err=0.0
@@ -143,15 +166,21 @@ try:
             lr_decay=epoch if param['learnRateDecay'] else 1
             train_err=0.0
             for index in xrange(train_num):
-                exception_num, err=grads.ssd(rnn,trainX[index],trainY[index],optimizer)
+                err=grads.ssd(rnn,trainX[index],trainY[index],optimizer)
                 train_err+=err
                 if index%param['batchSize']==0:
+                    if param.has_key('gradientSavedFile'):
+                        fopen=sys.stdout if param['gradientSavedFile']=='' else open(param['gradientSavedFile'], 'a')
+                        rnn.print_gradient(fopen,notes={'epoch':epoch,'index':index})
                     optimizer.update(rnn,learnRate,decay=lr_decay)
+            if param.has_key('gradientSavedFile'):
+                fopen=sys.stdout if param['gradientSavedFile']=='' else open(param['gradientSavedFile'], 'a')
+                rnn.print_gradient(fopen,notes={'epoch':epoch,'index':index})
             optimizer.update(rnn,learnRate,decay=lr_decay)
             train_err_list.append(train_err)
+            if param.has_key('modelSavedFolder'):
+                rnn.save(param['modelSavedFolder']+os.sep+'ssd-epoch%d.pkl'%epoch)
             print 'train err on Epoch %d: %f'%(epoch,train_err)
-            if exception_num!=0:
-                print 'throw %d exceptions in total while applying sharp operator!'%exception_num
             if param['trainOnly']==False:
                 test_err=0.0
                 for index in xrange(test_num):
@@ -182,6 +211,9 @@ except:
             results+='|%f'%test_err_epoch
     results+='\n'
     results+='time=%.2f\n'%(end-begin)
+    if param.has_key('errOutputFolder'):
+        create_dir(param['errOutputFolder'])
+        rnn.save(param['errOutputFolder']+os.sep+'errModelSaved.pkl',testOnly=False)
 
 
 with open(param['outFile'],'a') as fopen:

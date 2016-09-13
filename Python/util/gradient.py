@@ -1,4 +1,5 @@
 import math
+import random
 
 import numpy as np
 
@@ -17,3 +18,21 @@ def dsigmoid(M):
         return sig_v*(1-sig_v)
     dsigmoid_vec=np.vectorize(dsigmoid_unit)
     return dsigmoid_vec(M)
+
+def relu(M):
+    def relu_unit(v):
+        relu_v=v if v>0 else 0
+        return relu_v
+    relu_vec=np.vectorize(relu_unit)
+    return relu_vec(M)
+
+def drelu(M):
+    def drelu_unit(v):
+        if v<-1e-8:
+            return 0
+        elif v>1e-8:
+            return 1
+        else:
+            return random.random()
+    drelu_vec=np.vectorize(drelu_unit)
+    return drelu_vec(M)

@@ -49,12 +49,12 @@ def sgd(model,states,ground_truth,optimizer,final_label=False):
 
         # Forward Propagation
         linear_comb=np.dot(model.U[0],token)+np.dot(model.W[0],hidden_states[0])
-        hidden_states[0]=gradient.sigmoid(linear_comb)
-        lamb[0]=gradient.dsigmoid(linear_comb)
+        hidden_states[0]=model.activation[0](linear_comb)
+        lamb[0]=model.dactivation[0](linear_comb)
         for i in xrange(1,hidden_layers):
             linear_comb=np.dot(model.U[i],hidden_states[i-1])+np.dot(model.W[i],hidden_states[i])
-            hidden_states[i]=gradient.sigmoid(linear_comb)
-            lamb[i]=gradient.dsigmoid(linear_comb)
+            hidden_states[i]=model.activation[i](linear_comb)
+            lamb[i]=model.dactivation[i](linear_comb)
         
         # R[n][i,j]=dS[n][i]_t/dS[n-1][j]_t
         # S[n][i,j]=dS[n][i]_t/dS[n][j]_{t-1}
@@ -156,12 +156,12 @@ def ssd(model,states,ground_truth,optimizer,final_label=False):
 
         # Forward Propagation
         linear_comb=np.dot(model.U[0],token)+np.dot(model.W[0],hidden_states[0])
-        hidden_states[0]=gradient.sigmoid(linear_comb)
-        lamb[0]=gradient.dsigmoid(linear_comb)
+        hidden_states[0]=model.activation[0](linear_comb)
+        lamb[0]=model.dactivation[0](linear_comb)
         for i in xrange(1,hidden_layers):
             linear_comb=np.dot(model.U[i],hidden_states[i-1])+np.dot(model.W[i],hidden_states[i])
-            hidden_states[i]=gradient.sigmoid(linear_comb)
-            lamb[i]=gradient.dsigmoid(linear_comb)
+            hidden_states[i]=model.activation[i](linear_comb)
+            lamb[i]=model.dactivation(linear_comb)
         
         # R[n][i,j]=dS[n][i]_t/dS[n-1][j]_t
         # S[n][i,j]=dS[n][i]_t/dS[n][j]_{t-1}
