@@ -160,13 +160,13 @@ try:
             train_err_this_epoch.append(err)
             if (index+1)%batch_size==0:
                 print 'Average Error in Epoch = %d, index = [%d, %d): %.4f'%(epoch, index+1-batch_size, index+1, np.mean(train_err_this_epoch[-batch_size:]))
-                fopen=sys.stdout if gradient_saved_folder==None else open(gradient_saved_folder+os.sep+'%s.grad'%name,'a')
-                rnn.print_gradient(fopen,notes={'epoch':epoch,'index':index})
+                fopen=sys.stdout if gradient_saved_folder==None else gradient_saved_folder+os.sep+'%s.pkl'%name
+                rnn.save_gradient(fopen,notes={'epoch':epoch,'index':index})
                 optimizer.update(rnn,learn_rate,decay=lr_decay)
                 # norm=matrixNorm.norm(rnn.W[0],np.inf)
                 # rnn.W[0]/=norm
-        fopen=sys.stdout if gradient_saved_folder==None else open(gradient_saved_folder+os.sep+'%s.grad'%name,'a')
-        rnn.print_gradient(fopen,notes={'epoch':epoch,'index':index})
+        fopen=sys.stdout if gradient_saved_folder==None else gradient_saved_folder+os.sep+'%s.pkl'%name
+        rnn.save_gradient(fopen,notes={'epoch':epoch,'index':index})
         optimizer.update(rnn,learn_rate,decay=lr_decay)
         train_err=np.mean(train_err_this_epoch)
         train_err_list.append(train_err)

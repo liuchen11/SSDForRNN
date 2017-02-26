@@ -1,3 +1,4 @@
+import os
 import sys
 import copy
 import cPickle
@@ -143,7 +144,35 @@ class RNNs(object):
             out_file.write('Average abs value of matrix gs in layer %d: %.5f\n'%(idx+1, np.mean(np.abs(self.gs[idx]))/self.buffer))
         out_file.write('Average abs value of matrix gV: %.5f\n'%(np.mean(np.abs(self.gV))/self.buffer))
         out_file.flush()
-            
+
+    '''
+    >>> saved the gradient information
+    >>> out_file: file or sys.stdout
+    >>> notes: dict, extra information need to be mentioned
+    '''
+    def save_gradient(self,out_file,notes={}):
+        if out_file==sys.stdout:
+            self.print_gradient(out_file,notes)
+            return
+        if self.buffer==0:
+            print 'There is no gradient information yet\n'
+
+        gradient_info_list=cPickle.load(open(out_file,'rb')) if os.path.exists(out_file) else []
+        gradient_info=notes
+
+        gU=[];gW=[];gs=[]
+        for idx in xrange(self.hidden_layers):
+            gU.append(np.mean(np.abs(self.gU[idx]))/self.buffer)
+            gW.append(np.mean(np.abs(self.gW[idx]))/self.buffer)
+            gs.append(np.mean(np.abs(self.gs[idx]))/self.buffer)
+        gV=np.mean(np.abs(self.gV))/self.buffer
+        gradient_info['gU']=gU
+        gradient_info['gW']=gW
+        gradient_info['gs']=gs
+        gradient_info['gV']=gV
+        gradient_info_list.append(gradient_info)
+        cPickle.dump(gradient_info_list,open(out_file,'wb'))
+
     '''
     >>> save the model
     >>> out_file: str, name of saved file

@@ -11,23 +11,26 @@
         <param name="window" type="int">3</param>
         <param name="hiddens" type="list_int">50</param>
         <param name="outputs" type="int">128</param>
-        <param name="nonlinearity" type="list_str">sigd</param>
-        <param name="batchSize" type="int">25</param>
-        <param name="learnRateU" type="float">0.01</param>
-        <param name="learnRateW" type="float">0.01</param>
-        <param name="learnRates" type="float">0.01</param>
-        <param name="learnRateV" type="float">0.05</param>
+        <param name="nonlinearity" type="list_str">tanh</param>
+        <param name="batchSize" type="int">400</param>
+        <param name="learnRateU" type="float">1</param>
+        <param name="learnRateW" type="float">1</param>
+        <param name="learnRates" type="float">1</param>
+        <param name="learnRateV" type="float">5</param>
         <param name="mode" type="str">sgd_const</param>
+        <param name="model2load" type="str">models/sampleModels/sample1.pkl</param>
         <param name="nEpoch" type="int">100</param>
         <param name="alpha" type="float">0.9</param>
         <param name="damping" type="float">1.0</param>
         <param name="learnRateDecay" type="bool">False</param>
         <param name="trainOnly" type="bool">False</param>
+        <param name="gradientThreshold" type="float">1</param>
     </net>
     <io>
         <param name="outputMode" type="str">a</param>
         <param name="outFile" type="str">results/sgd.log</param>
-        <param name="modelSavedFolder" type="str">results/sgdModels</param>
-        <param name="errOutputFolder" type="str">results/sgdModels</param>
+        <param name="gradientSavedFolder" type="str">results/gradient</param>
+        <param name="modelSavedFolder" type="str">results/Models</param>
+        <param name="errOutputFolder" type="str">results/Models</param>
     </io>
 </config>
