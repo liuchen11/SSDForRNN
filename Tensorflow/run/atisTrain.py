@@ -74,5 +74,5 @@ if __name__=='__main__':
             test_err_ckpt[batch_idx+1]=np.mean(test_loss_list)
 
     my_rnn_model.train_validate_test_end()
-    pickle.dump({'train':train_err_ckpt,'test':test_err_ckpt},open(model_saved_folder+os.sep+'%s.pkl'%my_rnn_model.name))
+    pickle.dump({'train':train_err_ckpt,'test':test_err_ckpt},open(model_saved_folder+os.sep+'%s.pkl'%my_rnn_model.name,'w'))
 
