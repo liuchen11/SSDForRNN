@@ -1,0 +1,43 @@
+<hyper_params>
+    <data_manager>
+        <param name="max_sequence_length" type="int">30</param>
+        <param name="window_size" type="int">3</param>
+        <param name="embedding_dim" type="int">100</param>
+        <param name="embedding_file" type="str">../atis/dict100.csv</param>
+        <set_files>
+            <param name="train" type="list_str">../atis/train_word.csv,../atis/train_label.csv</param>
+            <param name="test" type="list_str">../atis/test_word.csv,../atis/test_label.csv</param>
+        </set_files>
+    </data_manager>
+    <rnn_network>
+        <param name="name" type="str">rnn_sgd</param>
+        <param name="neurons" type="list_int">300,100,128</param>
+        <param name="nonlinearity" type="list_str">tanh</param>
+        <param name="batch_size" type="int">400</param>
+        <param name="max_sequence_length" type="int">30</param>
+        <param name="embedding_dim" type="int">100</param>
+        <param name="window_size" type="int">3</param>
+        <!-- <param name="vocab_size" type="int"></param> -->
+        <param name="pretrain_embedding" type="bool">True</param>
+        <param name="grad_clip_norm" type="float">0.5</param>
+        <update_policy>
+            <param name="name" type="str">ssd</param>
+            <param name="learning_rate" type="float">0.01</param>
+        </update_policy>
+        <step_size>
+            <param name="init_state" type="float">1.0</param>
+            <param name="input_matrix" type="float">1.0</param>
+            <param name="recurrent_matrix" type="float">1.0</param>
+            <param name="hidden_bias" type="float">1.0</param>
+            <param name="output_matrix" type="float">1.0</param>
+            <param name="output_bias" type="float">1.0</param>
+            <param name="embedding_matrix" type="float">1.0</param>
+        </step_size>
+    </rnn_network>
+    <train>
+        <param name="batches" type="int">1000</param>
+        <param name="check_err_frequency" type="int">20</param>
+        <param name="do_test_frequency" type="int">50</param>
+        <param name="model_saved_folder" type="str">model_saved</param>
+    </train>
+</hyper_params>

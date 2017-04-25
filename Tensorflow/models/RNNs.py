@@ -29,6 +29,7 @@ class N2NRNNs(object):
         self.grad_clip_norm=hyper_params['grad_clip_norm'] if 'grad_clip_norm' in hyper_params else 1.0
         self.sess=None
 
+        # Load structure information
         self.all_layers=len(self.neurons)
         self.hidden_layers=len(self.neurons)-2
         self.input_size=self.neurons[0]
@@ -37,6 +38,12 @@ class N2NRNNs(object):
         if type(self.nonlinearity)==str:
             self.nonlinearity=[self.nonlinearity,]*self.hidden_layers
         assert(self.window_size*self.embedding_dim==self.input_size)
+
+        # Load step size
+        self.step_size={'input_matrix':[1.,]*self.hidden_layers,'recurrent_matrix':[1.,]*self.hidden_layers,'hidden_bias':[1.,]*self.hidden_layers,
+            'init_state':[1.,]*self.hidden_layers,'embedding_matrix':1.,'output_matrix':1.,'output_bias':1.}
+        if 'step_size' in hyper_params:
+            self.__load_step_size__(hyper_params['step_size'])
 
         self.inputs=tf.placeholder(tf.int32,shape=[self.batch_size,self.max_sequence_length,self.window_size])
         self.masks=tf.placeholder(tf.int32,shape=[self.batch_size,self.max_sequence_length])
@@ -132,6 +139,7 @@ class N2NRNNs(object):
             optimizer=tf.train.GradientDescentOptimizer(learning_rate)
             gradients=optimizer.compute_gradients(self.loss)
             clipped_gradients=[(tf.clip_by_value(grad,-self.grad_clip_norm,self.grad_clip_norm),var) for grad,var in gradients]
+            clipped_gradients=[self.__query_step_size__(grad,var) for grad,var in clipped_gradients]
             self.update=optimizer.apply_gradients(clipped_gradients)
         elif update_policy_name.lower() in ['ssd','spectral_descent']:
             learning_rate=self.update_policy['learning_rate']
@@ -157,10 +165,75 @@ class N2NRNNs(object):
                     clipped_gradients.append((clipped_grad_sharp,var))
                 else:
                     raise Exception('Untracked variable: (%s)'%var.name)
+            clipped_gradients=[self.__query_step_size__(grad,var) for grad,var in clipped_gradients]
             self.update=optimizer.apply_gradients(clipped_gradients)
         else:
             raise ValueError('Unrecognized update policy name: %s'%update_policy_name)
         print('Optimizer construction completed!')
+
+    '''
+    >>> load step_size information
+    '''
+    def __load_step_size__(self,step_size_info):
+        if 'input_matrix' in step_size_info:
+            input_matrix_lr=step_size_info['input_matrix']
+            self.step_size['input_matrix']=input_matrix_lr if type(input_matrix_lr)==list else [input_matrix_lr,]*self.hidden_layers
+        assert(len(self.step_size['input_matrix'])==self.hidden_layers)
+        if 'recurrent_matrix' in step_size_info:
+            recurrent_matrix_lr=step_size_info['recurrent_matrix']
+            self.step_size['recurrent_matrix']=recurrent_matrix_lr if type(recurrent_matrix_lr)==list else [recurrent_matrix_lr,]*self.hidden_layers
+        assert(len(self.step_size['recurrent_matrix'])==self.hidden_layers)
+        if 'hidden_bias' in step_size_info:
+            hidden_bias_lr=step_size_info['hidden_bias']
+            self.step_size['hidden_bias']=hidden_bias_lr if type(hidden_bias_lr)==list else [hidden_bias_lr,]*self.hidden_layers
+        assert(len(self.step_size['hidden_bias'])==self.hidden_layers)
+        if 'init_state' in step_size_info:
+            init_state_lr=step_size_info['init_state']
+            self.step_size['init_state']=init_state_lr if type(init_state_lr)==list else [init_state_lr,]*self.hidden_layers
+        assert(len(self.step_size['init_state'])==self.hidden_layers)
+        if 'embedding_matrix' in step_size_info:
+            self.step_size['embedding_matrix']=step_size_info['embedding_matrix']
+        if 'output_matrix' in step_size_info:
+            self.step_size['output_matrix']=step_size_info['output_matrix']
+        if 'output_bias' in step_size_info:
+            self.step_size['output_bias']=step_size_info['output_bias']
+
+    '''
+    >>> query the step_size of a variable
+    '''
+    def __query_step_size__(self,grad,var):
+        if grad==None:
+            return grad,var
+
+        if var in self.rnn_var_init_state:
+            layer_index=self.rnn_var_init_state.index(var)
+            step_size_this_var=self.step_size['init_state'][layer_index]
+            grad=grad*step_size_this_var
+        elif var in self.rnn_var_weight:                # contains two parts
+            layer_index=self.rnn_var_weight.index(var)
+            input_dim=self.neurons[layer_index]
+            step_size_input_part=self.step_size['input_matrix'][layer_index]
+            step_size_recurrent_part=self.step_size['recurrent_matrix'][layer_index]
+            input_part=grad[:input_dim]*step_size_input_part
+            recurrent_part=grad[input_dim:]*step_size_recurrent_part
+            grad=tf.concat([input_part,recurrent_part],axis=0)
+        elif var in self.rnn_var_bias:
+            layer_index=self.rnn_var_bias.index(var)
+            step_size_this_var=self.step_size['hidden_bias'][layer_index]
+            grad=grad*step_size_this_var
+        elif var in [self.output_matrix,]:
+            step_size_this_var=self.step_size['output_matrix']
+            grad=grad*step_size_this_var
+        elif var in [self.output_bias,]:
+            step_size_this_var=self.step_size['output_bias']
+            grad=grad*step_size_this_var
+        elif var in [self.embedding_matrix,]:
+            step_size_this_var=self.step_size['embedding_matrix']
+            grad=grad*step_size_this_var
+        else:
+            raise Exception('Untracked variable: (%s)'%var.name)
+        return grad,var
+
 
     '''
     >>> initialize the network configuration to start training, validation and testing
