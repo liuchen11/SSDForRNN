@@ -132,9 +132,26 @@ class N2NRNNs(object):
         print('Network structure constructed')
 
         sys.stdout.write('Constructing the optimizer\r')
-        update_policy_name=self.update_policy['name']
+        self.__optimizer_construction__(policy=self.update_policy)
+        print('Optimizer construction completed!')
+
+    '''
+    >>> learning_rate decay
+    '''
+    def learning_rate_decay(self,ratio):
+        current_learning_rate=self.update_policy['learning_rate']
+        self.update_policy['learning_rate']*=ratio
+        modified_learning_rate=self.update_policy['learning_rate']
+        self.__optimizer_construction__(policy=self.update_policy)
+        print('Learning rate decay %.4f -> %.4f'%(current_learning_rate,modified_learning_rate))
+
+    '''
+    >>> construct the optimizer
+    '''
+    def __optimizer_construction__(self,policy):
+        update_policy_name=policy['name']
         if update_policy_name.lower() in ['sgd','gradient_descent']:
-            learning_rate=self.update_policy['learning_rate']
+            learning_rate=policy['learning_rate']
             print('We use a sgd optimizer with learning rate %.4f'%learning_rate)
             optimizer=tf.train.GradientDescentOptimizer(learning_rate)
             gradients=optimizer.compute_gradients(self.loss)
@@ -142,7 +159,7 @@ class N2NRNNs(object):
             clipped_gradients=[self.__query_step_size__(grad,var) for grad,var in clipped_gradients]
             self.update=optimizer.apply_gradients(clipped_gradients)
         elif update_policy_name.lower() in ['ssd','spectral_descent']:
-            learning_rate=self.update_policy['learning_rate']
+            learning_rate=policy['learning_rate']
             print('We use a ssd optimizer with learning rate %.4f'%learning_rate)
             optimizer=tf.train.GradientDescentOptimizer(learning_rate)
             gradients=optimizer.compute_gradients(self.loss)
@@ -169,7 +186,6 @@ class N2NRNNs(object):
             self.update=optimizer.apply_gradients(clipped_gradients)
         else:
             raise ValueError('Unrecognized update policy name: %s'%update_policy_name)
-        print('Optimizer construction completed!')
 
     '''
     >>> load step_size information

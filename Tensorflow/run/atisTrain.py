@@ -38,6 +38,12 @@ if __name__=='__main__':
     check_err_frequency=train_params['check_err_frequency']
     do_test_frequency=train_params['do_test_frequency']
     model_saved_folder=train_params['model_saved_folder']
+    lr_decay_frequency=train_params['lr_decay_frequency'] if 'lr_decay_frequency' in train_params else None
+    lr_decay_ratio=train_params['lr_decay_ratio'] if 'lr_decay_ratio' in train_params else None
+    if lr_decay_frequency<=0:
+        lr_decay_frequency=None
+    if lr_decay_ratio<=0:
+        lr_decay_ratio=None
 
     train_err_ckpt={}
     test_err_ckpt={}
@@ -59,6 +65,9 @@ if __name__=='__main__':
             print('Average loss in [%d,%d) = %.4f'%(batch_idx+1-check_err_frequency,batch_idx+1,np.mean(train_loss_list[-check_err_frequency:])))
             train_err_ckpt[batch_idx+1]=np.mean(train_loss_list[-check_err_frequency:])
 
+        if lr_decay_frequency!=None and (batch_idx+1)%lr_decay_frequency==0:
+            my_rnn_model.learning_rate_decay(ratio=lr_decay_ratio)
+
         if (batch_idx+1)%do_test_frequency==0:
             my_rnn_model.dump_params(file2dump=model_saved_folder+os.sep+'%s_%d.ckpt'%(my_rnn_model.name,batch_idx+1))
 
@@ -74,5 +83,6 @@ if __name__=='__main__':
             test_err_ckpt[batch_idx+1]=np.mean(test_loss_list)
 
     my_rnn_model.train_validate_test_end()
-    pickle.dump({'train':train_err_ckpt,'test':test_err_ckpt},open(model_saved_folder+os.sep+'%s.pkl'%my_rnn_model.name,'w'))
+    saved_dict={'train':train_err_ckpt, 'test':test_err_ckpt, 'config':hyper_params}
+    pickle.dump(saved_dict, open(model_saved_folder+os.sep+'%s.pkl'%my_rnn_model.name,'w'))
 
