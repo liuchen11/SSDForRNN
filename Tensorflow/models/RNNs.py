@@ -84,8 +84,9 @@ class N2NRNNs(object):
                 activation_func={'relu':tf.nn.relu,'tanh':tf.tanh,'sigmoid':tf.sigmoid,'sigd':tf.sigmoid}[self.nonlinearity[idx].lower()]
                 rnn_cell_this_layer=tf.contrib.rnn.BasicRNNCell(neuron_num,activation=activation_func)
                 init_state=tf.get_variable(name='init_%d'%(idx+1),
-                    initializer=tf.constant(np.zeros([self.batch_size,neuron_num],dtype=np.float32)),dtype=tf.float32)
-                current_slice,state=rnn_cell_this_layer(current_slice,init_state)
+                    initializer=tf.constant(np.zeros([neuron_num,],dtype=np.float32)),dtype=tf.float32)
+                state=tf.matmul(tf.ones([self.batch_size,1],dtype=tf.float32),tf.reshape(init_state,shape=[1,neuron_num]))
+                current_slice,state=rnn_cell_this_layer(current_slice,state)
                 self.rnn_cell_list.append(rnn_cell_this_layer)
                 rnn_state_list.append(state)
                 self.rnn_var_init_state.append(init_state)
@@ -269,11 +270,28 @@ class N2NRNNs(object):
     '''
     >>> training phrase
     >>> inputs,masks,labels: np.array, inputs of the network
+    >>> inputs, np.array of shape [None,self.max_sequence_length,self.window_size]
+    >>> masks, np.array of shape [None,self.max_sequence_length]
+    >>> labels, np.array of shape [None,self.max_sequence_length]
     '''
     def train(self,inputs,masks,labels):
+        instance_num=inputs.shape[0]
+        assert(instance_num==masks.shape[0])
+        assert(instance_num==labels.shape[0])
+        if instance_num<self.batch_size:
+            _inputs=np.zeros([self.batch_size,self.max_sequence_length,self.window_size],dtype=np.int)
+            _inputs[:instance_num]=inputs
+            inputs=_inputs
+            _masks=np.zeros([self.batch_size,self.max_sequence_length],dtype=np.int)
+            _masks[:instance_num]=masks
+            masks=_masks
+            _labels=np.zeros([self.batch_size,self.max_sequence_length],dtype=np.int)
+            _labels[:instance_num]=labels
+            labels=_labels
+
         train_dict={self.inputs:inputs,self.masks:masks,self.labels:labels}
         self.sess.run(self.update,feed_dict=train_dict)
-        prediction_this_batch,loss_this_batch=self.sess.run([self.prediction,self.loss],feed_dict=train_dict)        
+        prediction_this_batch,loss_this_batch=self.sess.run([self.prediction,self.loss],feed_dict=train_dict)
         return prediction_this_batch,loss_this_batch
 
     '''
@@ -281,6 +299,20 @@ class N2NRNNs(object):
     >>> inputs,masks,labels: np.array, inputs of the network
     '''
     def validate(self,inputs,masks,labels):
+        instance_num=inputs.shape[0]
+        assert(instance_num==masks.shape[0])
+        assert(instance_num==labels.shape[0])
+        if instance_num<self.batch_size:
+            _inputs=np.zeros([self.batch_size,self.max_sequence_length,self.window_size],dtype=np.int)
+            _inputs[:instance_num]=inputs
+            inputs=_inputs
+            _masks=np.zeros([self.batch_size,self.max_sequence_length],dtype=np.int)
+            _masks[:instance_num]=masks
+            masks=_masks
+            _labels=np.zeros([self.batch_size,self.max_sequence_length],dtype=np.int)
+            _labels[:instance_num]=labels
+            labels=_labels
+
         validate_dict={self.inputs:inputs,self.masks:masks,self.labels:labels}
         prediction_this_batch,loss_this_batch=self.sess.run([self.prediction,self.loss],feed_dict=validate_dict)
         return prediction_this_batch,loss_this_batch
@@ -290,6 +322,16 @@ class N2NRNNs(object):
     >>> inputs,masks: np.array, inputs of the network
     '''
     def test(self,inputs,masks):
+        instance_num=inputs.shape[0]
+        assert(instance_num==masks.shape[0])
+        if instance_num<self.batch_size:
+            _inputs=np.zeros([self.batch_size,self.max_sequence_length,self.window_size],dtype=np.int)
+            _inputs[:instance_num]=inputs
+            inputs=_inputs
+            _masks=np.zeros([self.batch_size,self.max_sequence_length],dtype=np.int)
+            _masks[:instance_num]=masks
+            masks=_masks
+
         test_dict={self.inputs:inputs,self.masks:masks}
         prediction_this_batch,=self.sess.run([self.prediction],feed_dict=test_dict)
         return prediction_this_batch,

@@ -75,7 +75,7 @@ if __name__=='__main__':
             my_data_manager.set_initialization(set_label='test',permutation=True)
             end_of_epoch=False
             while not end_of_epoch:
-                inputs,masks,labels,end_of_epoch=my_data_manager.batch_gen(set_label='test',batch_size=batch_size)
+                inputs,masks,labels,end_of_epoch=my_data_manager.batch_gen(set_label='test',batch_size=1)
                 _,loss_this_batch=my_rnn_model.validate(inputs,masks,labels)
                 test_loss_list.append(loss_this_batch)
                 sys.stdout.write('Test phrase .. current batch loss = %.4f, average loss = %.4f\r'%(loss_this_batch,np.mean(test_loss_list)))
