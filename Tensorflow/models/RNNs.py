@@ -81,7 +81,11 @@ class N2NRNNs(object):
         current_slice=input_slices[0]    # of shape [self.batch_size, self.window_size*self.embedding_dim]
         with tf.variable_scope('RNN') as scope:
             for idx,neuron_num in enumerate(self.hidden_size):
-                activation_func={'relu':tf.nn.relu,'tanh':tf.tanh,'sigmoid':tf.sigmoid,'sigd':tf.sigmoid}[self.nonlinearity[idx].lower()]
+                if idx<len(self.nonlinearity):
+                    activation_func={'relu':tf.nn.relu,'tanh':tf.tanh,'sigmoid':tf.sigmoid,'sigd':tf.sigmoid}[self.nonlinearity[idx].lower()]
+                else:
+                    print('For hidden layer %d, use tanh as default activation_func'%(idx+1))
+                    activation_func='tanh'
                 rnn_cell_this_layer=tf.contrib.rnn.BasicRNNCell(neuron_num,activation=activation_func)
                 init_state=tf.get_variable(name='init_%d'%(idx+1),
                     initializer=tf.constant(np.zeros([neuron_num,],dtype=np.float32)),dtype=tf.float32)
@@ -180,8 +184,8 @@ class N2NRNNs(object):
                     recur_matrix_sharp,recur_matrix_sigular_value=sharp.sharp(grad[input_dim:])          # of shape [hidden_dim, hidden_dim]
                     input_matrix_sharp=tf.clip_by_value(input_matrix_sharp,-self.grad_clip_norm,self.grad_clip_norm)
                     recur_matrix_sharp=tf.clip_by_value(recur_matrix_sharp,-self.grad_clip_norm,self.grad_clip_norm)
-                    input_matrix_sharp/=tf.reduce_sum(input_matrix_sigular_value)
-                    recur_matrix_sharp/=tf.reduce_sum(recur_matrix_sigular_value)
+                    # input_matrix_sharp/=tf.reduce_sum(input_matrix_sigular_value)
+                    # recur_matrix_sharp/=tf.reduce_sum(recur_matrix_sigular_value)
                     grad_sharp=tf.concat([input_matrix_sharp,recur_matrix_sharp],axis=0)
                     clipped_gradients.append((grad_sharp,var))
                 else:
