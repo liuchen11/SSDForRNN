@@ -79,8 +79,8 @@ class N2NRNNs(object):
         self.rnn_var_bias=[]             # a list of bias of the rnn cells (of size H)
         rnn_state_list=[]                # a list of current states of all rnn
         current_slice=input_slices[0]    # of shape [self.batch_size, self.window_size*self.embedding_dim]
-        with tf.variable_scope('RNN') as scope:
-            for idx,neuron_num in enumerate(self.hidden_size):
+        for idx,neuron_num in enumerate(self.hidden_size):
+            with tf.variable_scope('RNN_layer%d'%(idx+1)) as scope:
                 if idx<len(self.nonlinearity):
                     activation_func={'relu':tf.nn.relu,'tanh':tf.tanh,'sigmoid':tf.sigmoid,'sigd':tf.sigmoid}[self.nonlinearity[idx].lower()]
                 else:
@@ -115,8 +115,8 @@ class N2NRNNs(object):
             output_slices.append(tf.add(tf.matmul(current_slice,self.output_matrix),self.output_bias))
 
         for current_slice in input_slices[1:]:
-            with tf.variable_scope('RNN',reuse=True) as scope:
-                for idx,neuron_num in enumerate(self.hidden_size):
+            for idx,neuron_num in enumerate(self.hidden_size):
+                with tf.variable_scope('RNN_layer%d'%(idx+1),reuse=True) as scope:
                     rnn_cell_this_layer=self.rnn_cell_list[idx]
                     current_slice,state=rnn_cell_this_layer(current_slice,rnn_state_list[idx])
                     rnn_state_list[idx]=state
