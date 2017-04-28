@@ -85,7 +85,7 @@ class N2NRNNs(object):
                     activation_func={'relu':tf.nn.relu,'tanh':tf.tanh,'sigmoid':tf.sigmoid,'sigd':tf.sigmoid}[self.nonlinearity[idx].lower()]
                 else:
                     print('For hidden layer %d, use tanh as default activation_func'%(idx+1))
-                    activation_func='tanh'
+                    activation_func=tf.tanh
                 rnn_cell_this_layer=tf.contrib.rnn.BasicRNNCell(neuron_num,activation=activation_func)
                 init_state=tf.get_variable(name='init_%d'%(idx+1),
                     initializer=tf.constant(np.zeros([neuron_num,],dtype=np.float32)),dtype=tf.float32)
