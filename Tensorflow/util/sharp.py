@@ -7,4 +7,4 @@ import tensorflow as tf
 '''
 def sharp(input):
     s,U,V=tf.svd(input,full_matrices=False)
-    return tf.matmul(U,tf.transpose(V))*tf.reduce_sum(s)
+    return tf.matmul(U,tf.transpose(V))*tf.reduce_sum(s),s

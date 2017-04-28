@@ -176,11 +176,14 @@ class N2NRNNs(object):
                     input_dim=self.neurons[layer_index]
                     hidden_dim=self.neurons[layer_index+1]
                     assert(var.value().shape==[input_dim+hidden_dim,hidden_dim])
-                    input_matrix_transpose_sharp=sharp.sharp(grad[:input_dim])          # of shape [input_dim, hidden_dim]
-                    hidden_matrix_transpose_sharp=sharp.sharp(grad[input_dim:])         # of shape [hidden_dim, hidden_dim]
-                    grad_sharp=tf.concat([input_matrix_transpose_sharp,hidden_matrix_transpose_sharp],axis=0)
-                    clipped_grad_sharp=tf.clip_by_value(grad_sharp,-self.grad_clip_norm,self.grad_clip_norm)
-                    clipped_gradients.append((clipped_grad_sharp,var))
+                    input_matrix_sharp,input_matrix_sigular_value=sharp.sharp(grad[:input_dim])          # of shape [input_dim, hidden_dim]
+                    recur_matrix_sharp,recur_matrix_sigular_value=sharp.sharp(grad[input_dim:])          # of shape [hidden_dim, hidden_dim]
+                    input_matrix_sharp=tf.clip_by_value(input_matrix_sharp,-self.grad_clip_norm,self.grad_clip_norm)
+                    recur_matrix_sharp=tf.clip_by_value(recur_matrix_sharp,-self.grad_clip_norm,self.grad_clip_norm)
+                    input_matrix_sharp/=tf.reduce_sum(input_matrix_sigular_value)
+                    recur_matrix_sharp/=tf.reduce_sum(recur_matrix_sigular_value)
+                    grad_sharp=tf.concat([input_matrix_sharp,recur_matrix_sharp],axis=0)
+                    clipped_gradients.append((grad_sharp,var))
                 else:
                     raise Exception('Untracked variable: (%s)'%var.name)
             clipped_gradients=[self.__query_step_size__(grad,var) for grad,var in clipped_gradients]
