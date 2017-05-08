@@ -3,6 +3,7 @@ sys.path.insert(0,'./util')
 import numpy as np
 import tensorflow as tf
 
+import norm
 import sharp
 
 '''
@@ -158,16 +159,16 @@ class N2NRNNs(object):
         if update_policy_name.lower() in ['sgd','gradient_descent']:
             learning_rate=policy['learning_rate']
             print('We use a sgd optimizer with learning rate %.4f'%learning_rate)
-            optimizer=tf.train.GradientDescentOptimizer(learning_rate)
-            gradients=optimizer.compute_gradients(self.loss)
+            self.optimizer=tf.train.GradientDescentOptimizer(learning_rate)
+            gradients=self.optimizer.compute_gradients(self.loss)
             clipped_gradients=[(tf.clip_by_value(grad,-self.grad_clip_norm,self.grad_clip_norm),var) for grad,var in gradients]
             clipped_gradients=[self.__query_step_size__(grad,var) for grad,var in clipped_gradients]
-            self.update=optimizer.apply_gradients(clipped_gradients)
+            self.update=self.optimizer.apply_gradients(clipped_gradients)
         elif update_policy_name.lower() in ['ssd','spectral_descent']:
             learning_rate=policy['learning_rate']
             print('We use a ssd optimizer with learning rate %.4f'%learning_rate)
-            optimizer=tf.train.GradientDescentOptimizer(learning_rate)
-            gradients=optimizer.compute_gradients(self.loss)
+            self.optimizer=tf.train.GradientDescentOptimizer(learning_rate)
+            gradients=self.optimizer.compute_gradients(self.loss)
             clipped_gradients=[]
             for grad,var in gradients:
                 if grad==None:
@@ -191,7 +192,7 @@ class N2NRNNs(object):
                 else:
                     raise Exception('Untracked variable: (%s)'%var.name)
             clipped_gradients=[self.__query_step_size__(grad,var) for grad,var in clipped_gradients]
-            self.update=optimizer.apply_gradients(clipped_gradients)
+            self.update=self.optimizer.apply_gradients(clipped_gradients)
         else:
             raise ValueError('Unrecognized update policy name: %s'%update_policy_name)
 
@@ -258,6 +259,97 @@ class N2NRNNs(object):
             raise Exception('Untracked variable: (%s)'%var.name)
         return grad,var
 
+    '''
+    >>> calculate the norm of a vector or a matrix
+    '''
+    def __tensor_norm__(self,tensor,order):
+        if order in ['Si']:           # Schatten inf norm
+            s,U,V=tf.svd(tensor,full_matrices=False)
+            return tf.norm(s,ord=np.inf)
+        elif order[0]=='S':           # Schatten norm
+            s,U,V=tf.svd(tensor,full_matrices=False)
+            sub_order=int(order[1:])
+            return tf.norm(s,ord=sub_order)
+        else:
+            sub_order=int(order)
+            return tf.norm(tensor,ord=sub_order)
+
+    '''
+    >>> build analysis variables
+    '''
+    def __build_analysis_var__(self):
+        self.analysis={'init_state':{},'input_matrix':{},'recur_matrix':{},
+            'hidden_bias':{},'output_matrix':{},'output_bias':{}}
+        self.analysis['init_state']={
+            'v_p2norm':[None,]*self.hidden_layers,'g_p2norm':[None,]*self.hidden_layers
+        }
+        self.analysis['input_matrix']={
+            'v_p2norm':[None,]*self.hidden_layers,'g_p2norm':[None,]*self.hidden_layers,
+            'v_s1norm':[None,]*self.hidden_layers,'g_s1norm':[None,]*self.hidden_layers,
+            'v_sinorm':[None,]*self.hidden_layers,'g_sinorm':[None,]*self.hidden_layers,
+            'v_singular_value':[None,]*self.hidden_layers,'g_singular_value':[None,]*self.hidden_layers
+        }
+        self.analysis['recur_matrix']={
+            'v_p2norm':[None,]*self.hidden_layers,'g_p2norm':[None,]*self.hidden_layers,
+            'v_s1norm':[None,]*self.hidden_layers,'g_s1norm':[None,]*self.hidden_layers,
+            'v_sinorm':[None,]*self.hidden_layers,'g_sinorm':[None,]*self.hidden_layers,
+            'v_singular_value':[None,]*self.hidden_layers,'g_singular_value':[None,]*self.hidden_layers
+        }
+        self.analysis['hidden_bias']={
+            'v_p2norm':[None,]*self.hidden_layers,'g_p2norm':[None,]*self.hidden_layers
+        }
+        self.analysis['output_matrix']={
+            'v_p2norm':[None,],'g_p2norm':[None,],
+            'v_s1norm':[None,],'g_s1norm':[None,],
+            'v_sinorm':[None,],'g_sinorm':[None,],
+            'v_singular_value':[None,],'g_singular_value':[None,]
+        }
+        self.analysis['output_bias']={
+            'v_p2norm':[None,],'g_p2norm':[None,]
+        }
+
+        for grad,var in self.optimizer.compute_gradients(self.loss):
+            if var in self.rnn_var_init_state:
+                layer_index=self.rnn_var_init_state.index(var)
+                self.analysis['init_state']['v_p2norm'][layer_index]=norm.p_norm(var,2)
+                self.analysis['init_state']['g_p2norm'][layer_index]=norm.p_norm(grad,2)
+            elif var in self.rnn_var_weight:
+                layer_index=self.rnn_var_weight.index(var)
+                input_dim=self.neurons[layer_index]
+                input_var=var[:input_dim]
+                input_grad=grad[:input_dim]
+                recur_var=var[input_dim:]
+                recur_grad=grad[input_dim:]
+                self.analysis['input_matrix']['v_p2norm'][layer_index]=norm.p_norm(input_var,2)
+                self.analysis['input_matrix']['g_p2norm'][layer_index]=norm.p_norm(input_grad,2)
+                self.analysis['recur_matrix']['v_p2norm'][layer_index]=norm.p_norm(recur_var,2)
+                self.analysis['recur_matrix']['g_p2norm'][layer_index]=norm.p_norm(recur_grad,2)
+                self.analysis['input_matrix']['v_singular_value'][layer_index],[self.analysis['input_matrix']['v_s1norm'][layer_index], \
+                    self.analysis['input_matrix']['v_sinorm'][layer_index]]=norm.s_norm(input_var,[1,np.inf])
+                self.analysis['input_matrix']['g_singular_value'][layer_index],[self.analysis['input_matrix']['g_s1norm'][layer_index], \
+                    self.analysis['input_matrix']['g_sinorm'][layer_index]]=norm.s_norm(input_grad,[1,np.inf])
+                self.analysis['recur_matrix']['v_singular_value'][layer_index],[self.analysis['recur_matrix']['v_s1norm'][layer_index], \
+                    self.analysis['recur_matrix']['v_sinorm'][layer_index]]=norm.s_norm(recur_var,[1,np.inf])
+                self.analysis['recur_matrix']['g_singular_value'][layer_index],[self.analysis['recur_matrix']['g_s1norm'][layer_index], \
+                    self.analysis['recur_matrix']['g_sinorm'][layer_index]]=norm.s_norm(recur_grad,[1,np.inf])
+            elif var in self.rnn_var_bias:
+                layer_index=self.rnn_var_bias.index(var)
+                self.analysis['hidden_bias']['v_p2norm'][layer_index]=norm.p_norm(var,2)
+                self.analysis['hidden_bias']['g_p2norm'][layer_index]=norm.p_norm(grad,2)
+            elif var in [self.output_matrix,]:
+                self.analysis['output_matrix']['v_p2norm'][0]=norm.p_norm(var,2)
+                self.analysis['output_matrix']['g_p2norm'][0]=norm.p_norm(grad,2)
+                self.analysis['output_matrix']['v_singular_value'][0],[self.analysis['output_matrix']['v_s1norm'][0], \
+                    self.analysis['output_matrix']['v_sinorm'][0]]=norm.s_norm(var,[1,np.inf])
+                self.analysis['output_matrix']['g_singular_value'][0],[self.analysis['output_matrix']['g_s1norm'][0], \
+                    self.analysis['output_matrix']['g_sinorm'][0]]=norm.s_norm(grad,[1,np.inf])
+            elif var in [self.output_bias,]:
+                self.analysis['output_bias']['v_p2norm'][0]=norm.p_norm(var,2)
+                self.analysis['output_bias']['g_p2norm'][0]=norm.p_norm(grad,2)
+            elif var in [self.embedding_matrix,]:
+                continue
+            else:
+                raise Exception('Untracked variable: (%s)'%var.name)
 
     '''
     >>> initialize the network configuration to start training, validation and testing
@@ -265,14 +357,6 @@ class N2NRNNs(object):
     def train_validate_test_init(self):
         self.sess=tf.Session()
         self.sess.run(tf.global_variables_initializer())
-
-    '''
-    >>> for debug
-    '''
-    def debug(self,inputs,masks,labels):
-        debug_dict={self.inputs:inputs,self.masks:masks,self.labels:labels}
-        result,=self.sess.run([self.output],feed_dict=debug_dict)
-        return result,
 
     '''
     >>> training phrase
@@ -342,6 +426,38 @@ class N2NRNNs(object):
         test_dict={self.inputs:inputs,self.masks:masks}
         prediction_this_batch,=self.sess.run([self.prediction],feed_dict=test_dict)
         return prediction_this_batch,
+
+    '''
+    >>> analyze variables
+    >>> inputs, masks, labels: np.array, inputs of the network
+    '''
+    def analyze_var(self,inputs,masks,labels):
+        feed_dict={self.inputs:inputs,self.masks:masks,self.labels:labels}
+        ret={'init_state':{},'input_matrix':{},'recur_matrix':{},
+            'hidden_bias':{},'output_matrix':{},'output_bias':{}}
+
+        ret['init_state']={
+            key: self.sess.run(self.analysis['init_state'][key],feed_dict=feed_dict) for key in ['v_p2norm','g_p2norm']
+        }
+        ret['input_matrix']={
+            key: self.sess.run(self.analysis['input_matrix'][key],feed_dict=feed_dict) \
+                for key in ['v_p2norm','g_p2norm','v_s1norm','g_s1norm','v_sinorm','g_sinorm','v_singular_value','g_singular_value']
+        }
+        ret['recur_matrix']={
+            key: self.sess.run(self.analysis['recur_matrix'][key],feed_dict=feed_dict) \
+                for key in ['v_p2norm','g_p2norm','v_s1norm','g_s1norm','v_sinorm','g_sinorm','v_singular_value','g_singular_value']
+        }
+        ret['hidden_bias']={
+            key: self.sess.run(self.analysis['hidden_bias'][key],feed_dict=feed_dict) for key in ['v_p2norm','g_p2norm']
+        }
+        ret['output_matrix']={
+            key: self.sess.run(self.analysis['output_matrix'][key],feed_dict=feed_dict) \
+                for key in ['v_p2norm','g_p2norm','v_s1norm','g_s1norm','v_sinorm','g_sinorm','v_singular_value','g_singular_value']
+        }
+        ret['output_bias']={
+            key: self.sess.run(self.analysis['output_bias'][key],feed_dict=feed_dict) for key in ['v_p2norm','g_p2norm']
+        }
+        return ret
 
     '''
     >>> save the parameters

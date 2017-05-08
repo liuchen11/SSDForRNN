@@ -84,5 +84,13 @@ if __name__=='__main__':
 
     my_rnn_model.train_validate_test_end()
     saved_dict={'train':train_err_ckpt, 'test':test_err_ckpt, 'config':hyper_params}
-    pickle.dump(saved_dict, open(model_saved_folder+os.sep+'%s.pkl'%my_rnn_model.name,'w'))
+    saved_dict_name=model_saved_folder+os.sep+'%s.pkl'%my_rnn_model.name
+    if os.path.exists(saved_dict_name):
+        print('WARNING: File %s already exists'%saved_dict_name)
+        sub_idx=1
+        while os.path.exists(model_saved_folder+os.sep+'%s(%d).pkl'%(my_rnn_model.name,sub_idx)):
+            sub_idx+=1
+        saved_dict_name=model_saved_folder+os.sep+'%s(%d).pkl'%(my_rnn_model.name,sub_idx)
+        print('Saved in file %s instead!'%saved_dict_name)
+    pickle.dump(saved_dict, open(saved_dict_name,'w'))
 
