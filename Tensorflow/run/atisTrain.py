@@ -52,6 +52,10 @@ if __name__=='__main__':
 
     if not os.path.exists(model_saved_folder):
         os.makedirs(model_saved_folder)
+    if do_analyze_var==True:
+        print('Variable analysis is ENABLED')
+    else:
+        print('Variable analysis is DISABLED')
 
     my_rnn_model.train_validate_test_init()
     my_data_manager.set_initialization(set_label='train',permutation=True)
@@ -59,7 +63,6 @@ if __name__=='__main__':
     for batch_idx in xrange(batches):
         inputs,masks,labels,_=my_data_manager.batch_gen(set_label='train',batch_size=batch_size)
         _,loss_this_batch=my_rnn_model.train(inputs,masks,labels)
-        result,=my_rnn_model.debug(inputs,masks,labels)
         train_loss_list.append(loss_this_batch)
         sys.stdout.write('Batch_idx = %d/%d, loss = %.4f\r'%(batch_idx+1,batches,loss_this_batch))
 
