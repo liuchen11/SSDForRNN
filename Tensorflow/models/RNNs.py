@@ -141,6 +141,9 @@ class N2NRNNs(object):
         self.__optimizer_construction__(policy=self.update_policy)
         print('Optimizer construction completed!')
 
+        self.__build_analysis_var__()
+        print('Analysis variable construction completed!')
+
     '''
     >>> learning_rate decay
     '''

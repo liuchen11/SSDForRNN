@@ -38,6 +38,7 @@ if __name__=='__main__':
     check_err_frequency=train_params['check_err_frequency']
     do_test_frequency=train_params['do_test_frequency']
     model_saved_folder=train_params['model_saved_folder']
+    do_analyze_var=train_params['do_analyze_var'] if 'do_analyze_var' in train_params else True
     lr_decay_frequency=train_params['lr_decay_frequency'] if 'lr_decay_frequency' in train_params else None
     lr_decay_ratio=train_params['lr_decay_ratio'] if 'lr_decay_ratio' in train_params else None
     if lr_decay_frequency<=0:
@@ -47,6 +48,7 @@ if __name__=='__main__':
 
     train_err_ckpt={}
     test_err_ckpt={}
+    var_analysis_ckpt={}
 
     if not os.path.exists(model_saved_folder):
         os.makedirs(model_saved_folder)
@@ -64,6 +66,9 @@ if __name__=='__main__':
         if (batch_idx+1)%check_err_frequency==0:
             print('Average loss in [%d,%d) = %.4f'%(batch_idx+1-check_err_frequency,batch_idx+1,np.mean(train_loss_list[-check_err_frequency:])))
             train_err_ckpt[batch_idx+1]=np.mean(train_loss_list[-check_err_frequency:])
+            if do_analyze_var==True:
+                var_analysis_report=my_rnn_model.analyze_var(inputs,masks,labels)
+                var_analysis_ckpt[batch_idx+1]=var_analysis_report
 
         if lr_decay_frequency!=None and (batch_idx+1)%lr_decay_frequency==0:
             my_rnn_model.learning_rate_decay(ratio=lr_decay_ratio)
@@ -83,7 +88,7 @@ if __name__=='__main__':
             test_err_ckpt[batch_idx+1]=np.mean(test_loss_list)
 
     my_rnn_model.train_validate_test_end()
-    saved_dict={'train':train_err_ckpt, 'test':test_err_ckpt, 'config':hyper_params}
+    saved_dict={'train':train_err_ckpt, 'test':test_err_ckpt, 'config':hyper_params,'var_analysis':var_analysis_ckpt}
     saved_dict_name=model_saved_folder+os.sep+'%s.pkl'%my_rnn_model.name
     if os.path.exists(saved_dict_name):
         print('WARNING: File %s already exists'%saved_dict_name)
